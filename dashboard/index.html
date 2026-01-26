@@ -211,6 +211,13 @@
                     <canvas id="goalsProgressChart"></canvas>
                 </div>
             </div>
+
+            <div class="chart-card">
+                <h2 class="chart-title">💓 Heart Rate Zone Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="hrDistributionChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -419,7 +426,7 @@
             if (!data) return;
 
             const ctx = document.getElementById('goalsProgressChart').getContext('2d');
-            
+
             const labels = data.dates.map(d => {
                 const date = new Date(d);
                 return date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -468,12 +475,72 @@
             });
         }
 
+        // Render heart rate distribution chart
+        async function renderHRDistribution() {
+            const data = await loadJSON('hr_distribution.json');
+            if (!data) return;
+
+            const ctx = document.getElementById('hrDistributionChart').getContext('2d');
+
+            // Zone colors matching intensity
+            const zoneColors = {
+                'resting': '#007AFF',    // Blue - calm
+                'light': '#34C759',      // Green - easy
+                'moderate': '#FF9500',   // Orange - working
+                'vigorous': '#FF3B30',   // Red - intense
+                'peak': '#AF52DE'        // Purple - max effort
+            };
+
+            const colors = data.labels.map(label => zoneColors[label] || '#999');
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#1a1a1a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} days (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // Initialize dashboard
         async function initDashboard() {
             await renderStats();
             await renderDailyTrends();
             await renderWeeklyComparison();
             await renderGoalsProgress();
+            await renderHRDistribution();
         }
 
         // Load dashboard on page load
