@@ -55,9 +55,11 @@ All scripts include `icloud_helper.py` which handles:
 - **Summary statistics** - Key metrics at a glance
 - **Fully responsive** - Works on desktop, tablet, and mobile
 
-**View dashboard:** `open dashboard/index.html`  
-**Update data:** `python3 scripts/generate_dashboard_data.py`  
+**View dashboard:** `python serve.py` (starts server at http://localhost:8080)
+**Update data:** `python3 scripts/generate_dashboard_data.py`
 **Deploy:** See [DEPLOYMENT.md](DEPLOYMENT.md) for hosting options
+
+> **Important:** Always use `python serve.py` to view the dashboard. Opening `index.html` directly will fail due to browser CORS restrictions.
 
 ## Initial Analysis Goals
 
@@ -91,9 +93,15 @@ All scripts include `icloud_helper.py` which handles:
 cd ~/clawd/projects/health-analytics
 python3 scripts/generate_dashboard_data.py
 
-# Open dashboard in browser
-open dashboard/index.html
+# Start dashboard server (recommended - avoids CORS issues)
+python serve.py
+# Opens dashboard at http://localhost:8080
+
+# Or use custom port
+python serve.py --port 3000
 ```
+
+**Note:** Opening `dashboard/index.html` directly via `file://` protocol will cause CORS errors. Always use the HTTP server via `python serve.py`.
 
 ### Command Line Analysis
 
