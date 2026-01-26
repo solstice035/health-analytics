@@ -57,3 +57,13 @@ visualizations/*.html
 # Environment variables
 .env
 .env.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Allow test fixture JSON files
+!tests/fixtures/*.json

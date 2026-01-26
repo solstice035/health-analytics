@@ -101,45 +101,50 @@ def list_available_files(directory, pattern="*.json", ensure_downloaded=True):
 def read_json_safe(file_path, max_retries=3, retry_delay=1.0):
     """
     Safely read a JSON file from iCloud with retry logic.
-    
+
     Args:
         file_path: Path to JSON file
         max_retries: Maximum number of retry attempts
         retry_delay: Seconds to wait between retries
-    
+
     Returns:
         Parsed JSON data or None if failed
     """
     import json
-    
+
     file_path = Path(file_path)
-    
+
     for attempt in range(max_retries):
         try:
             # Ensure file is downloaded
             if not ensure_downloaded(file_path):
                 return None
-            
+
             # Try to read
             with open(file_path, 'r') as f:
                 return json.load(f)
-                
+
         except (OSError, IOError) as e:
             if "Resource deadlock avoided" in str(e):
                 if attempt < max_retries - 1:
                     # Trigger explicit download
-                    subprocess.run(['brctl', 'download', str(file_path)], 
+                    subprocess.run(['brctl', 'download', str(file_path)],
                                  capture_output=True)
                     time.sleep(retry_delay)
                     continue
+                else:
+                    # Max retries reached
+                    return None
             raise
         except json.JSONDecodeError as e:
             # File might still be syncing
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 continue
-            raise
-    
+            else:
+                # Max retries reached, return None instead of raising
+                return None
+
     return None
 
 
