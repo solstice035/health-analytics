@@ -1,0 +1,5 @@
+# Ignore generated JSON data (contains personal health information)
+data/*.json
+
+# But keep the data directory itself
+!data/.gitkeep

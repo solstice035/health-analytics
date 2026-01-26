@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-blue: #007AFF;
+            --accent-green: #34C759;
+            --accent-orange: #FF9500;
+            --accent-red: #FF3B30;
+            --border-color: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .last-updated {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-unit {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-goal {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        .goal-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .goal-success {
+            background: rgba(52, 199, 89, 0.2);
+            color: var(--accent-green);
+        }
+
+        .goal-warning {
+            background: rgba(255, 149, 0, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: var(--accent-red);
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍎 Health Analytics</h1>
+            <div class="subtitle">Personal Health & Fitness Dashboard</div>
+            <div class="last-updated" id="lastUpdated">Loading...</div>
+        </header>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="loading">Loading statistics...</div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card full-width">
+                <h2 class="chart-title">📊 30-Day Activity Trends</h2>
+                <div class="chart-container">
+                    <canvas id="dailyTrendsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h2 class="chart-title">📈 Weekly Comparison</h2>
+                <div class="chart-container">
+                    <canvas id="weeklyComparisonChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h2 class="chart-title">🎯 7-Day Goal Progress</h2>
+                <div class="chart-container">
+                    <canvas id="goalsProgressChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js default configuration
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.borderColor = '#333333';
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+        // Utility function to load JSON
+        async function loadJSON(filename) {
+            try {
+                const response = await fetch(`data/${filename}`);
+                if (!response.ok) throw new Error(`Failed to load ${filename}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Error loading ${filename}:`, error);
+                return null;
+            }
+        }
+
+        // Format numbers with commas
+        function formatNumber(num) {
+            return num.toLocaleString();
+        }
+
+        // Render summary statistics
+        async function renderStats() {
+            const stats = await loadJSON('summary_stats.json');
+            const metadata = await loadJSON('metadata.json');
+            
+            if (!stats) {
+                document.getElementById('statsGrid').innerHTML = '<div class="error">Failed to load statistics</div>';
+                return;
+            }
+
+            // Update last updated time
+            if (metadata) {
+                const lastUpdate = new Date(metadata.generated_at);
+                document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdate.toLocaleString()}`;
+            }
+
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Steps (7-day avg)</div>
+                    <div class="stat-value">${formatNumber(stats.averages.steps)}</div>
+                    <div class="stat-unit">steps/day</div>
+                    <div class="stat-goal">
+                        <span class="goal-badge ${stats.goals.steps_10k.achieved >= 5 ? 'goal-success' : 'goal-warning'}">
+                            ${stats.goals.steps_10k.achieved}/${stats.goals.steps_10k.total} days hit 10K
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Distance (7-day avg)</div>
+                    <div class="stat-value">${stats.averages.distance_km}</div>
+                    <div class="stat-unit">km/day</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Active Energy</div>
+                    <div class="stat-value">${formatNumber(stats.averages.active_energy_kcal)}</div>
+                    <div class="stat-unit">kcal/day</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Exercise Time</div>
+                    <div class="stat-value">${stats.averages.exercise_minutes}</div>
+                    <div class="stat-unit">min/day</div>
+                    <div class="stat-goal">
+                        <span class="goal-badge ${stats.goals.exercise_30m.achieved === stats.goals.exercise_30m.total ? 'goal-success' : 'goal-warning'}">
+                            ${stats.goals.exercise_30m.achieved}/${stats.goals.exercise_30m.total} days hit 30min
+                        </span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Resting Heart Rate</div>
+                    <div class="stat-value">${stats.averages.resting_hr}</div>
+                    <div class="stat-unit">bpm</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Heart Rate Variability</div>
+                    <div class="stat-value">${stats.averages.hrv}</div>
+                    <div class="stat-unit">ms</div>
+                </div>
+            `;
+        }
+
+        // Render 30-day trends chart
+        async function renderDailyTrends() {
+            const data = await loadJSON('daily_trends.json');
+            if (!data) return;
+
+            const ctx = document.getElementById('dailyTrendsChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates.map(d => {
+                        const date = new Date(d);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }),
+                    datasets: [{
+                        label: 'Steps',
+                        data: data.steps,
+                        borderColor: '#007AFF',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Active Energy (kcal)',
+                        data: data.active_energy,
+                        borderColor: '#FF9500',
+                        backgroundColor: 'rgba(255, 149, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Steps'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Energy (kcal)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render weekly comparison chart
+        async function renderWeeklyComparison() {
+            const data = await loadJSON('weekly_comparison.json');
+            if (!data) return;
+
+            const ctx = document.getElementById('weeklyComparisonChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.weeks,
+                    datasets: [{
+                        label: 'Avg Steps',
+                        data: data.avg_steps,
+                        backgroundColor: '#007AFF',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Average Steps per Day'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render goals progress chart
+        async function renderGoalsProgress() {
+            const data = await loadJSON('goals_progress.json');
+            if (!data) return;
+
+            const ctx = document.getElementById('goalsProgressChart').getContext('2d');
+            
+            const labels = data.dates.map(d => {
+                const date = new Date(d);
+                return date.toLocaleDateString('en-US', { weekday: 'short' });
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '10K Steps',
+                        data: data.steps_goal,
+                        backgroundColor: '#007AFF',
+                    }, {
+                        label: '12 Stand Hours',
+                        data: data.stand_goal,
+                        backgroundColor: '#34C759',
+                    }, {
+                        label: '30min Exercise',
+                        data: data.exercise_goal,
+                        backgroundColor: '#FF9500',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value === 1 ? '✓' : '✗';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize dashboard
+        async function initDashboard() {
+            await renderStats();
+            await renderDailyTrends();
+            await renderWeeklyComparison();
+            await renderGoalsProgress();
+        }
+
+        // Load dashboard on page load
+        window.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Auto-refresh every 5 minutes
+        setInterval(initDashboard, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
