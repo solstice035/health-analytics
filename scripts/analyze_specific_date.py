@@ -9,7 +9,14 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-HEALTH_DATA_PATH = Path.home() / "clawd/projects/health-analytics/data"
+# Import iCloud helper
+try:
+    from icloud_helper import read_json_safe, get_icloud_status
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).parent))
+    from icloud_helper import read_json_safe, get_icloud_status
+
+HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
 
 def analyze_date(date_str):
     """Analyze health data for a specific date."""
@@ -21,11 +28,16 @@ def analyze_date(date_str):
     
     print(f"📊 Analyzing: {file_path.name}")
     
-    try:
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-    except Exception as e:
-        print(f"❌ Could not read file: {e}")
+    # Check iCloud status
+    status = get_icloud_status(file_path)
+    print(f"   iCloud status: {status}")
+    
+    # Use safe reading with iCloud handling
+    data = read_json_safe(file_path)
+    
+    if data is None:
+        print(f"❌ Could not read file (may still be syncing from iCloud)")
+        print(f"   Try: brctl download {file_path}")
         return
     
     print(f"\n🔑 Top-level keys: {', '.join(data.keys())}")

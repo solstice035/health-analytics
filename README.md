@@ -11,20 +11,39 @@ Daily automated exports of Apple Health data in JSON format. Currently **175 day
 ## Data Structure
 
 - **Format:** Daily JSON files named `HealthAutoExport-YYYY-MM-DD.json`
-- **Frequency:** Daily automated exports
+- **Frequency:** Daily automated exports (synced to iCloud)
 - **Date Range:** 2025-08-05 to 2026-01-26 (175 files)
+- **Access:** Symlinked from iCloud Drive with automated sync handling
 
 ## Project Structure
 
 ```
 health-analytics/
 ├── README.md              # This file
-├── data/                  # Symlink to iCloud data (or local copies)
+├── data/                  # Symlink to iCloud Drive health exports
 ├── notebooks/             # Jupyter notebooks for exploration
 ├── scripts/               # Python analysis scripts
+│   ├── icloud_helper.py         # iCloud file access utilities
+│   ├── explore_data.py          # Data structure explorer
+│   ├── analyze_specific_date.py # Single-day analyzer
+│   ├── daily_health_check.py    # Automated daily monitoring
+│   └── sync_data.py             # (deprecated - using symlink now)
 ├── visualizations/        # Generated charts and reports
 └── requirements.txt       # Python dependencies
 ```
+
+## Data Access Method
+
+The project uses a **symlink** to directly access health data in iCloud Drive:
+
+```bash
+data/ -> ~/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/JSON/
+```
+
+All scripts include `icloud_helper.py` which handles:
+- Ensuring files are downloaded from iCloud before reading
+- Retrying on sync conflicts
+- Checking file availability status
 
 ## Initial Analysis Goals
 
@@ -52,18 +71,22 @@ health-analytics/
 ## Quick Start
 
 ```bash
-# Create Python virtual environment
+# Navigate to project
+cd ~/clawd/projects/health-analytics
+
+# Run daily health check (works with iCloud sync)
+python3 scripts/daily_health_check.py
+
+# Explore available data
+python3 scripts/explore_data.py
+
+# Analyze a specific date
+python3 scripts/analyze_specific_date.py 2026-01-25
+
+# Optional: Set up Python environment for advanced analysis
 python3 -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run initial data exploration
-python scripts/explore_data.py
-
-# Generate daily summary
-python scripts/daily_summary.py --date 2026-01-25
 ```
 
 ## Data Privacy
@@ -74,12 +97,14 @@ python scripts/daily_summary.py --date 2026-01-25
 
 ## Next Steps
 
-1. ✅ Locate data source (done)
-2. ⏳ Create symlink or copy mechanism
-3. ⏳ Explore JSON structure
-4. ⏳ Build data parser
-5. ⏳ Generate initial visualizations
-6. ⏳ Set up automated daily reports
+1. ✅ Locate data source
+2. ✅ Create symlink with iCloud sync handling
+3. ✅ Build iCloud-aware data access utilities
+4. ⏳ Explore JSON structure in detail
+5. ⏳ Build comprehensive data parser
+6. ⏳ Generate visualizations and trends
+7. ⏳ Set up automated daily reports
+8. ⏳ Create dashboards
 
 ## Notes
 

@@ -1,126 +1,142 @@
 # Next Steps - Health Analytics Project
 
-## Where We Are
+## ✅ Where We Are Now
 
 ✅ **Project created** at `~/clawd/projects/health-analytics/`  
 ✅ **Data located:** 175 days of Apple Health exports (Aug 2025 - Jan 2026)  
-✅ **Scripts ready:** Exploration and analysis tools created  
-⚠️  **Data access issue:** iCloud file locking prevents programmatic access
+✅ **Data access solved:** Symlink + iCloud helper working  
+✅ **Scripts ready:** Exploration and analysis tools functional  
+✅ **Daily monitoring:** Automated health check script created  
 
-## The Problem
+## 🎯 What's Next
 
-The health data files are stored in iCloud Drive and are being actively managed by iCloud's sync system. This causes "Resource deadlock avoided" errors when trying to read them programmatically, even after they're downloaded.
+### Phase 1: Understand the Data (Now)
 
-## Immediate Solutions (Pick One)
+**Goal:** Understand what data is available and how it's structured.
 
-### Option 1: Manual Copy from Finder (Easiest)
-I've opened the data folder in Finder. You can:
-
-1. Select all files in the Finder window that just opened
-2. Copy them (⌘+C)
-3. Navigate to: `~/clawd/projects/health-analytics/data/`
-4. Paste (⌘+V)
-
-This will create local copies that aren't managed by iCloud.
-
-### Option 2: Configure Health Export App
-Check the Health Export app settings - it might let you:
-- Export to a different location (not iCloud)
-- Create a local sync folder
-- Disable iCloud for the app's data
-
-### Option 3: Use AutoSync Folder
-I noticed there's also an "AutoSync" folder next to the JSON folder:
-```
-~/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/AutoSync/
-```
-
-This might be a different export option that could work better.
-
-## Once Data is Accessible
-
-### 1. Explore the Data Structure
 ```bash
 cd ~/clawd/projects/health-analytics
+
+# Run daily check (verify everything working)
+python3 scripts/daily_health_check.py
+
+# Explore data structure in detail
 python3 scripts/explore_data.py
+
+# Look at a specific day
+python3 scripts/analyze_specific_date.py 2026-01-20
 ```
 
-This will show you:
-- What health metrics are available
-- How the JSON is structured
-- Data point counts per metric
+**Outcome:** Document all available metrics and data format.
 
-### 2. Analyze a Specific Date
-```bash
-python3 scripts/analyze_specific_date.py 2026-01-25
-```
+### Phase 2: Build Data Parser
 
-### 3. Set Up Python Environment
+**Goal:** Create a robust parser that extracts all useful health metrics.
+
+Tasks:
+- [ ] Map complete JSON structure
+- [ ] Write parser for activity metrics (steps, energy, exercise)
+- [ ] Write parser for sleep data
+- [ ] Write parser for heart rate data
+- [ ] Write parser for workout data
+- [ ] Add error handling for missing/incomplete data
+
+### Phase 3: Analysis & Insights
+
+**Goal:** Generate meaningful insights from the data.
+
+Tasks:
+- [ ] Calculate daily/weekly/monthly averages
+- [ ] Identify trends over time
+- [ ] Find correlations (sleep vs activity, etc.)
+- [ ] Detect anomalies (unusually high/low days)
+- [ ] Compare weekdays vs weekends
+
+### Phase 4: Visualization
+
+**Goal:** Create charts and dashboards.
+
+Tasks:
+- [ ] Daily activity charts (steps, energy)
+- [ ] Sleep analysis graphs
+- [ ] Heart rate trends
+- [ ] Weekly/monthly summary reports
+- [ ] Correlation heatmaps
+- [ ] Set up automated report generation
+
+### Phase 5: Automation
+
+**Goal:** Fully automated daily health monitoring.
+
+Tasks:
+- [ ] Integrate with Clawdbot for daily notifications
+- [ ] Set up cron job for `daily_health_check.py`
+- [ ] Create alerts for unusual patterns
+- [ ] Generate weekly summary reports
+- [ ] Push reports to Obsidian or notifications
+
+## Quick Wins (Easy Implementation)
+
+1. **Daily Summary Email/Notification**
+   - Yesterday's steps, energy, sleep
+   - Send via Clawdbot each morning
+   
+2. **Weekly Activity Report**
+   - 7-day averages and trends
+   - Compare to previous week
+   
+3. **Sleep Tracker**
+   - Track bedtime/wake consistency
+   - Sleep duration trends
+   
+4. **Step Goal Tracker**
+   - Track days hitting 10K steps
+   - Calculate weekly success rate
+
+5. **Heart Rate Monitor**
+   - Resting HR trends
+   - Alert on unusual readings
+
+## Development Tips
+
+### Testing Scripts
 ```bash
+# Always run from project root
 cd ~/clawd/projects/health-analytics
+
+# Test iCloud access
+python3 scripts/icloud_helper.py data/HealthAutoExport-2026-01-25.json
+
+# Daily check (good for testing everything works)
+python3 scripts/daily_health_check.py
+```
+
+### Python Environment (Optional)
+For advanced analysis with Jupyter:
+```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 4. Start Jupyter for Interactive Exploration
-```bash
 jupyter notebook notebooks/
 ```
 
-## Quick Wins Once Data is Working
-
-1. **Daily Activity Summary**
-   - Steps, active energy, exercise minutes
-   - Create a simple daily report
-
-2. **Sleep Analysis**
-   - Duration trends over time
-   - Bedtime/wake time patterns
-
-3. **Heart Rate Insights**
-   - Resting heart rate trends
-   - HRV (Heart Rate Variability) tracking
-
-4. **Visualizations**
-   - Weekly activity charts
-   - Month-over-month comparisons
-   - Correlation heatmaps (sleep vs. activity, etc.)
-
-## Project Files
-
-All setup files are ready at:
-```
-~/clawd/projects/health-analytics/
-├── README.md               # Full project documentation
-├── CURRENT_STATUS.md       # Technical status & troubleshooting
-├── NEXT_STEPS.md          # This file
-├── requirements.txt        # Python packages needed
-├── data/                   # Put local copies here
-├── scripts/
-│   ├── explore_data.py              # Discover JSON structure
-│   ├── analyze_specific_date.py     # Single-day analysis
-│   └── sync_data.py                 # (needs data access fix)
-├── notebooks/              # For Jupyter exploration
-└── visualizations/         # Output charts go here
+### Git & GitHub
+Project is ready to push to GitHub:
+```bash
+cd ~/clawd/projects/health-analytics
+git status  # See current state
+git add .
+git commit -m "Your message"
+gh repo create health-analytics --private --source=. --push
 ```
 
-## Alternative: Export Health Data Differently
+## Priority Next Steps
 
-If iCloud continues to be problematic, you could:
-
-1. **Export directly from Health app** (Settings → Health → Export Health Data)
-   - Creates a zip with XML files
-   - Different format but complete data
-
-2. **Use a different export app** that saves locally instead of iCloud
-
-3. **Set up automated local exports** using Shortcuts app
-
-## Questions?
-
-The files are all set up and ready to go. The only blocker is getting clean access to the JSON files. Once that's solved (probably via manual copy from Finder), you're ready to start analyzing!
+1. **Immediate:** Run `explore_data.py` to document available metrics
+2. **This Week:** Build comprehensive data parser
+3. **Next Week:** Create first visualizations
+4. **Ongoing:** Integrate with Clawdbot for daily monitoring
 
 ---
 
-**Priority:** Get the data files copied locally, then run `explore_data.py` to see what we're working with.
+**Status:** ✅ Ready for development - data access working, scripts functional!

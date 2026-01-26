@@ -11,8 +11,17 @@ from collections import Counter, defaultdict
 from datetime import datetime
 import sys
 
-# Path to the iCloud health data
-HEALTH_DATA_PATH = Path.home() / "Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/JSON"
+# Import iCloud helper
+try:
+    from icloud_helper import read_json_safe, list_available_files, get_icloud_status
+except ImportError:
+    # Fallback if not in same directory
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    from icloud_helper import read_json_safe, list_available_files, get_icloud_status
+
+# Path to the health data (symlink to iCloud)
+HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
 
 def find_health_files():
     """Find all JSON health export files."""
@@ -20,28 +29,31 @@ def find_health_files():
         print(f"❌ Health data path not found: {HEALTH_DATA_PATH}")
         return []
     
+    print(f"📊 Scanning for health data files in iCloud...")
+    # Use iCloud-aware file listing (doesn't force download, just lists)
     files = sorted(HEALTH_DATA_PATH.glob("HealthAutoExport-*.json"))
     print(f"📊 Found {len(files)} health data files")
+    
+    # Check how many are downloaded
+    downloaded = sum(1 for f in files if f.stat().st_size > 0)
+    print(f"   {downloaded} files appear downloaded, {len(files) - downloaded} may need sync")
+    
     return files
 
-def explore_file_structure(file_path, max_attempts=3):
+def explore_file_structure(file_path):
     """Explore the structure of a single health data file."""
     print(f"\n📁 Analyzing: {file_path.name}")
     
-    # Try to read the file (may fail if syncing)
-    for attempt in range(max_attempts):
-        try:
-            with open(file_path, 'r') as f:
-                data = json.load(f)
-            break
-        except (OSError, json.JSONDecodeError) as e:
-            if attempt < max_attempts - 1:
-                print(f"⚠️  Attempt {attempt + 1} failed (file may be syncing), retrying...")
-                import time
-                time.sleep(1)
-            else:
-                print(f"❌ Could not read file after {max_attempts} attempts: {e}")
-                return None
+    # Check iCloud status
+    status = get_icloud_status(file_path)
+    print(f"   iCloud status: {status}")
+    
+    # Use safe JSON reading with iCloud handling
+    data = read_json_safe(file_path)
+    
+    if data is None:
+        print(f"❌ Could not read file (may still be syncing from iCloud)")
+        return None
     
     # Analyze top-level structure
     print(f"\n🔑 Top-level keys:")

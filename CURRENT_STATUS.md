@@ -1,22 +1,32 @@
 # Current Status - Health Analytics Project
 
 **Created:** January 26, 2026, 8:30 PM GMT  
-**Status:** 🟡 Initial Setup Complete, Data Access Issues
+**Updated:** January 26, 2026, 8:33 PM GMT  
+**Status:** 🟢 Setup Complete, Data Access Working
 
 ## What We've Done
 
 ✅ Located the health data in iCloud Drive  
 ✅ Created project structure at `~/clawd/projects/health-analytics/`  
 ✅ Set up Python requirements  
-✅ Created initial analysis scripts  
-✅ Documented the data source  
+✅ Created symlink to iCloud data directory  
+✅ Built iCloud-aware file access utilities (`icloud_helper.py`)  
+✅ Updated all scripts to handle iCloud sync automatically  
+✅ Created daily health check script for automated monitoring  
+✅ Documented the data source and access method  
 
-## Current Issue: iCloud File Access
+## ✅ Solution Implemented: Automated iCloud Access
 
-The health data files are stored in iCloud Drive and are currently **placeholders** (not fully downloaded locally). This causes two problems:
+Instead of copying files (which would break the daily automation), we implemented:
 
-1. **File locking errors:** "Resource deadlock avoided" when trying to read directly from iCloud
-2. **Zero-byte copies:** When copied, they remain as iCloud placeholders until accessed
+1. **Symlink to iCloud directory:** `data/` links directly to the iCloud health exports
+2. **Smart iCloud helper module:** `icloud_helper.py` handles file access with:
+   - Automatic download triggering using `brctl`
+   - Retry logic for sync conflicts
+   - File status checking (downloaded/downloading/placeholder)
+3. **Updated all scripts:** All analysis tools now use iCloud-aware reading
+
+This allows scripts to automatically work with the daily-synced data without manual copying.
 
 ## Data Details
 
@@ -25,35 +35,40 @@ The health data files are stored in iCloud Drive and are currently **placeholder
 - **Format:** `HealthAutoExport-YYYY-MM-DD.json`
 - **Total size:** ~516 MB (when fully downloaded)
 
-## Solutions to Try
+## How It Works
 
-### Option 1: Force iCloud Download
+### Symlink Setup
 ```bash
-# Use brctl to download files from iCloud
-brctl download ~/Library/Mobile\ Documents/iCloud~com~ifunography~HealthExport/Documents/JSON/
+data/ -> ~/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/JSON/
 ```
 
-### Option 2: Open in Finder
-Opening the folder in Finder will trigger iCloud to download the files:
+### iCloud Helper (`icloud_helper.py`)
+
+Key functions:
+- `ensure_downloaded(file_path)` - Triggers download if needed
+- `read_json_safe(file_path)` - Reads with retry logic
+- `get_icloud_status(file_path)` - Check download status
+- `list_available_files(directory)` - Get accessible files
+
+### Daily Automation
+
+Run the daily check script:
 ```bash
-open ~/Library/Mobile\ Documents/iCloud~com~ifunography~HealthExport/Documents/JSON/
+python3 scripts/daily_health_check.py
 ```
 
-### Option 3: Read Directly with Retry Logic
-Create a Python script that:
-1. Attempts to read the file
-2. If it gets 0 bytes, triggers download by opening it
-3. Waits and retries
+This will:
+- Verify data freshness (yesterday + today)
+- Show file count and date range
+- Extract basic metrics from yesterday
+- Report any issues
 
-### Option 4: Use Health Export App Directly
-Check if the Health Export app has a direct export feature or can be configured to save to a non-iCloud location.
+## Ready to Use
 
-## Next Steps
-
-1. Try `brctl download` to force iCloud to download all files
-2. Once files are local, update the sync script
-3. Run the exploration script to understand the JSON structure
-4. Build the analytics pipeline
+All scripts now work automatically with the iCloud-synced data:
+- ✅ `explore_data.py` - Analyze data structure
+- ✅ `analyze_specific_date.py` - Single-day reports
+- ✅ `daily_health_check.py` - Automated monitoring
 
 ## Project Structure
 
