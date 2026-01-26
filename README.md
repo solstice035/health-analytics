@@ -45,6 +45,20 @@ All scripts include `icloud_helper.py` which handles:
 - Retrying on sync conflicts
 - Checking file availability status
 
+## Dashboard
+
+**Interactive web dashboard** with real-time visualizations:
+
+- **30-day activity trends** - Steps and active energy over time
+- **Weekly comparison** - 12-week averages  
+- **Goal progress** - Track daily achievements (10K steps, 12hr stands, 30min exercise)
+- **Summary statistics** - Key metrics at a glance
+- **Fully responsive** - Works on desktop, tablet, and mobile
+
+**View dashboard:** `open dashboard/index.html`  
+**Update data:** `python3 scripts/generate_dashboard_data.py`  
+**Deploy:** See [DEPLOYMENT.md](DEPLOYMENT.md) for hosting options
+
 ## Initial Analysis Goals
 
 1. **Activity Metrics:**
@@ -70,6 +84,19 @@ All scripts include `icloud_helper.py` which handles:
 
 ## Quick Start
 
+### View the Dashboard
+
+```bash
+# Generate dashboard data
+cd ~/clawd/projects/health-analytics
+python3 scripts/generate_dashboard_data.py
+
+# Open dashboard in browser
+open dashboard/index.html
+```
+
+### Command Line Analysis
+
 ```bash
 # Navigate to project
 cd ~/clawd/projects/health-analytics
@@ -77,16 +104,14 @@ cd ~/clawd/projects/health-analytics
 # Run daily health check (works with iCloud sync)
 python3 scripts/daily_health_check.py
 
+# Get detailed analysis for a specific date
+python3 scripts/detailed_analysis.py 2026-01-25
+
+# View weekly summary
+python3 scripts/weekly_summary.py
+
 # Explore available data
 python3 scripts/explore_data.py
-
-# Analyze a specific date
-python3 scripts/analyze_specific_date.py 2026-01-25
-
-# Optional: Set up Python environment for advanced analysis
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
 ```
 
 ## Data Privacy
