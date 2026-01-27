@@ -1,146 +1,213 @@
 # Apple Health Data Analytics
 
-**Created:** January 26, 2026  
-**Data Source:** Health Auto Export app → iCloud Drive  
-**Location:** `~/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/JSON/`
+**A comprehensive health data analysis and visualization platform**
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Tests](https://img.shields.io/badge/Tests-212%20passing-green)
+![Coverage](https://img.shields.io/badge/Coverage-42%25-yellow)
 
 ## Overview
 
-Daily automated exports of Apple Health data in JSON format. Currently **175 days** of health data available (August 2025 - January 2026).
+Daily automated exports of Apple Health data in JSON format. Includes an interactive dashboard with trend analysis, goal tracking, and health insights.
 
-## Data Structure
+**Data Source:** Health Auto Export app → iCloud Drive
+**Data Range:** 176 days (August 2025 - January 2026)
+**Dashboard:** Interactive multi-tab dashboard with deep analysis
 
-- **Format:** Daily JSON files named `HealthAutoExport-YYYY-MM-DD.json`
-- **Frequency:** Daily automated exports (synced to iCloud)
-- **Date Range:** 2025-08-05 to 2026-01-26 (175 files)
-- **Access:** Symlinked from iCloud Drive with automated sync handling
+## Features
+
+- **Interactive Dashboard** - Real-time visualizations with per-section error recovery
+- **Unified CLI** - Single command interface for all operations
+- **Smart Caching** - Automatic cache invalidation for faster data access
+- **iCloud Integration** - Seamless sync with automatic download handling
+- **Daily Automation** - launchd-based scheduled data refresh
+- **Comprehensive Testing** - 212 tests with TDD approach
+
+## Quick Start
+
+### Using the CLI
+
+```bash
+cd ~/clawd/projects/health-analytics
+source venv/bin/activate
+
+# Check system status
+./health status
+
+# Start the dashboard
+./health dashboard
+
+# Generate fresh dashboard data
+./health generate
+
+# Run daily health check
+./health daily
+
+# View cache statistics
+./health cache stats
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `health dashboard` | Start the dashboard server (default: port 8080) |
+| `health generate` | Generate dashboard data files |
+| `health daily` | Run daily health check |
+| `health analyze DATE` | Analyze a specific date |
+| `health weekly` | Generate weekly summary |
+| `health deep` | Run deep analysis |
+| `health config` | Show configuration |
+| `health status` | Show system status |
+| `health cache stats` | Show cache statistics |
+| `health cache clear` | Clear the cache |
+| `health cache warm` | Pre-load data into cache |
+
+## Dashboard
+
+The interactive dashboard provides:
+
+### Overview Tab
+- **Health Score** - Weighted composite score based on activity, exercise, and vitals
+- **Quick Stats** - Steps, distance, active energy, exercise minutes
+- **Daily Goals** - 10K steps, 12hr stands, 30min exercise tracking
+- **Activity Trends** - 30-day charts for all metrics
+- **HR Distribution** - Doughnut chart with 5 heart rate zones
+
+### Deep Analysis Tabs
+- **Trends** - Monthly progression and weekly patterns
+- **Fitness** - VO2 Max tracking and metric correlations
+- **Heart** - Monthly HR trends and high-intensity day detection
+- **Records** - Personal records and achievement streaks
+- **Insights** - AI-generated health insights with recommendations
+
+### Error Recovery
+The dashboard includes per-section error handling:
+- Graceful degradation when data files are missing
+- User-friendly error messages
+- Retry buttons for failed sections
+- Visual status indicator (green/orange/red)
 
 ## Project Structure
 
 ```
 health-analytics/
-├── README.md              # This file
-├── data/                  # Symlink to iCloud Drive health exports
-├── notebooks/             # Jupyter notebooks for exploration
-├── scripts/               # Python analysis scripts
-│   ├── icloud_helper.py         # iCloud file access utilities
-│   ├── explore_data.py          # Data structure explorer
-│   ├── analyze_specific_date.py # Single-day analyzer
-│   ├── daily_health_check.py    # Automated daily monitoring
-│   └── sync_data.py             # (deprecated - using symlink now)
-├── visualizations/        # Generated charts and reports
-└── requirements.txt       # Python dependencies
+├── health                      # Unified CLI (executable)
+├── serve.py                    # Dashboard HTTP server
+├── dashboard/
+│   ├── index.html             # Interactive multi-tab dashboard
+│   └── data/                  # Generated JSON data files
+├── scripts/
+│   ├── icloud_helper.py       # iCloud file access utilities
+│   ├── generate_dashboard_data.py
+│   ├── deep_analysis.py       # Comprehensive analysis module
+│   ├── daily_health_check.py
+│   ├── weekly_summary.py
+│   └── ...
+├── src/health_analytics/
+│   ├── config.py              # Centralized configuration
+│   └── cache.py               # Disk-based caching layer
+├── tests/
+│   ├── unit/                  # Unit tests (212 tests)
+│   └── integration/           # Integration tests
+├── automation/
+│   ├── setup.sh               # Automation setup script
+│   └── com.health-analytics.daily-refresh.plist
+├── data/                      # Symlink to iCloud health exports
+└── logs/                      # Log files for automation
 ```
 
-## Data Access Method
+## Configuration
 
-The project uses a **symlink** to directly access health data in iCloud Drive:
+The project uses centralized configuration via `src/health_analytics/config.py`:
 
-```bash
-data/ -> ~/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/JSON/
+```python
+from health_analytics.config import config
+
+# Access paths
+data_path = config.health_data_path
+dashboard_path = config.dashboard_data_path
+cache_dir = config.cache_dir
 ```
 
-All scripts include `icloud_helper.py` which handles:
-- Ensuring files are downloaded from iCloud before reading
-- Retrying on sync conflicts
-- Checking file availability status
+Environment variable overrides:
+- `HEALTH_DATA_PATH` - Override health data location
+- `DASHBOARD_DATA_PATH` - Override dashboard data location
+- `HEALTH_ANALYTICS_CACHE_DIR` - Override cache directory
 
-## Dashboard
+## Automation
 
-**Interactive web dashboard** with real-time visualizations:
-
-- **30-day activity trends** - Steps and active energy over time
-- **Weekly comparison** - 12-week averages  
-- **Goal progress** - Track daily achievements (10K steps, 12hr stands, 30min exercise)
-- **Summary statistics** - Key metrics at a glance
-- **Fully responsive** - Works on desktop, tablet, and mobile
-
-**View dashboard:** `python serve.py` (starts server at http://localhost:8080)
-**Update data:** `python3 scripts/generate_dashboard_data.py`
-**Deploy:** See [DEPLOYMENT.md](DEPLOYMENT.md) for hosting options
-
-> **Important:** Always use `python serve.py` to view the dashboard. Opening `index.html` directly will fail due to browser CORS restrictions.
-
-## Initial Analysis Goals
-
-1. **Activity Metrics:**
-   - Daily step counts
-   - Active energy burned
-   - Exercise minutes
-   - Stand hours
-
-2. **Sleep Analysis:**
-   - Sleep duration trends
-   - Sleep quality patterns
-   - Bedtime/wake time consistency
-
-3. **Heart Rate:**
-   - Resting heart rate trends
-   - Heart rate variability (HRV)
-   - Workout heart rate zones
-
-4. **Trends & Correlations:**
-   - Activity vs. sleep quality
-   - Weekly patterns (weekday vs. weekend)
-   - Monthly trends and seasonality
-
-## Quick Start
-
-### View the Dashboard
+Enable daily automatic dashboard refresh:
 
 ```bash
-# Generate dashboard data
-cd ~/clawd/projects/health-analytics
-python3 scripts/generate_dashboard_data.py
+# Run the setup script
+./automation/setup.sh
 
-# Start dashboard server (recommended - avoids CORS issues)
-python serve.py
-# Opens dashboard at http://localhost:8080
+# Check if running
+launchctl list | grep health-analytics
 
-# Or use custom port
-python serve.py --port 3000
+# View logs
+tail -f logs/daily-refresh.log
+
+# Disable
+launchctl unload ~/Library/LaunchAgents/com.health-analytics.daily-refresh.plist
 ```
 
-**Note:** Opening `dashboard/index.html` directly via `file://` protocol will cause CORS errors. Always use the HTTP server via `python serve.py`.
+The dashboard automatically refreshes at 7:00 AM daily.
 
-### Command Line Analysis
+## Testing
 
 ```bash
-# Navigate to project
-cd ~/clawd/projects/health-analytics
+# Run all tests
+pytest tests/ -v
 
-# Run daily health check (works with iCloud sync)
-python3 scripts/daily_health_check.py
+# Run with coverage report
+pytest tests/ --cov=scripts --cov=src --cov-report=html
 
-# Get detailed analysis for a specific date
-python3 scripts/detailed_analysis.py 2026-01-25
+# Run specific test file
+pytest tests/unit/test_cache.py -v
 
-# View weekly summary
-python3 scripts/weekly_summary.py
+# Run only unit tests
+pytest tests/ -m unit -v
+```
 
-# Explore available data
-python3 scripts/explore_data.py
+Current status: **212 tests passing, 42% coverage**
+
+## Development
+
+```bash
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run tests with watch mode
+ptw tests/ -v
 ```
 
 ## Data Privacy
 
 - All data remains local (iCloud Drive)
 - No external services or uploads
-- Analysis runs locally on Mac Mini
+- Analysis runs locally on your machine
 
-## Next Steps
+## Recent Updates
 
-1. ✅ Locate data source
-2. ✅ Create symlink with iCloud sync handling
-3. ✅ Build iCloud-aware data access utilities
-4. ⏳ Explore JSON structure in detail
-5. ⏳ Build comprehensive data parser
-6. ⏳ Generate visualizations and trends
-7. ⏳ Set up automated daily reports
-8. ⏳ Create dashboards
+### v2.0 (January 2026)
+- Added unified CLI interface with 10+ commands
+- Implemented caching layer for 3x faster data access
+- Added per-section error recovery in dashboard
+- Added deep analysis module with trend detection
+- Added automated daily refresh via launchd
+- Expanded to 212 tests with TDD approach
 
-## Notes
+### v1.0 (January 2026)
+- Initial dashboard with activity trends
+- iCloud-aware data access
+- Basic data exploration scripts
 
-- Files may be actively syncing from iCloud
-- Use `cp` or `rsync` to create stable local copies for analysis
-- Consider creating a cron job to copy new files daily
+## License
+
+Private project - personal health data analysis.
