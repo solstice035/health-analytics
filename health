@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+"""
+Health Analytics CLI - Unified command-line interface for health data analysis.
+
+Usage:
+    health dashboard          Start the dashboard server
+    health generate           Generate dashboard data files
+    health daily              Run daily health check
+    health analyze DATE       Analyze a specific date
+    health weekly             Generate weekly summary
+    health explore            Explore data structure
+    health config             Show configuration
+    health status             Show system status
+
+Examples:
+    health dashboard --port 3000
+    health generate --days 60
+    health analyze 2026-01-25
+    health daily --notify
+"""
+
+import sys
+import argparse
+from pathlib import Path
+
+# Add src and scripts to path
+ROOT = Path(__file__).parent
+sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from health_analytics.config import config
+
+
+def cmd_dashboard(args):
+    """Start the dashboard server."""
+    from serve import main as serve_main
+    import sys
+
+    # Build arguments for serve.py
+    sys.argv = ['serve.py']
+    if args.port:
+        sys.argv.extend(['--port', str(args.port)])
+    if args.no_browser:
+        sys.argv.append('--no-browser')
+
+    serve_main()
+
+
+def cmd_generate(args):
+    """Generate dashboard data files."""
+    from generate_dashboard_data import main as generate_main
+    generate_main()
+
+
+def cmd_daily(args):
+    """Run daily health check."""
+    from daily_health_check import main as daily_main
+    daily_main()
+
+
+def cmd_analyze(args):
+    """Analyze a specific date."""
+    from analyze_specific_date import analyze_date
+    analyze_date(args.date)
+
+
+def cmd_weekly(args):
+    """Generate weekly summary."""
+    from weekly_summary import main as weekly_main
+    weekly_main()
+
+
+def cmd_explore(args):
+    """Explore data structure."""
+    from explore_data import main as explore_main
+    explore_main()
+
+
+def cmd_config(args):
+    """Show configuration."""
+    print(config)
+    print()
+    print("Validation:")
+    for name, info in config.validate().items():
+        status = "\033[92m✓\033[0m" if info['exists'] else "\033[91m✗\033[0m"
+        extra = " (symlink)" if info.get('is_symlink') else ""
+        print(f"  {status} {name}: {info['path']}{extra}")
+
+
+def cmd_status(args):
+    """Show system status."""
+    from datetime import datetime, timedelta
+    import os
+
+    print("\033[1mHealth Analytics Status\033[0m")
+    print("=" * 40)
+
+    # Config status
+    print("\n\033[94mConfiguration\033[0m")
+    print(f"  Project root: {config.project_root}")
+    print(f"  Health data:  {config.health_data_path}")
+    print(f"  Dashboard:    {config.dashboard_data_path}")
+
+    # Data status
+    print("\n\033[94mData Status\033[0m")
+    data_path = config.health_data_path
+    if data_path.exists():
+        files = list(data_path.glob("HealthAutoExport-*.json"))
+        if files:
+            latest = max(files, key=lambda f: f.name)
+            oldest = min(files, key=lambda f: f.name)
+            print(f"  Files found:  {len(files)}")
+            print(f"  Date range:   {oldest.stem[-10:]} to {latest.stem[-10:]}")
+
+            # Check for today/yesterday
+            today = datetime.now().strftime("%Y-%m-%d")
+            yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            today_file = data_path / f"HealthAutoExport-{today}.json"
+            yesterday_file = data_path / f"HealthAutoExport-{yesterday}.json"
+
+            if today_file.exists():
+                print(f"  Today's data: \033[92m✓\033[0m Available")
+            else:
+                print(f"  Today's data: \033[93m○\033[0m Not yet synced")
+
+            if yesterday_file.exists():
+                print(f"  Yesterday:    \033[92m✓\033[0m Available")
+            else:
+                print(f"  Yesterday:    \033[91m✗\033[0m Missing")
+        else:
+            print("  \033[91mNo health data files found\033[0m")
+    else:
+        print(f"  \033[91mData path does not exist: {data_path}\033[0m")
+
+    # Dashboard status
+    print("\n\033[94mDashboard Status\033[0m")
+    dashboard_path = config.dashboard_data_path
+    if dashboard_path.exists():
+        json_files = list(dashboard_path.glob("*.json"))
+        if json_files:
+            latest = max(json_files, key=lambda f: f.stat().st_mtime)
+            age = datetime.now() - datetime.fromtimestamp(latest.stat().st_mtime)
+            age_str = f"{int(age.total_seconds() / 3600)}h {int((age.total_seconds() % 3600) / 60)}m ago"
+            print(f"  Data files:   {len(json_files)}")
+            print(f"  Last updated: {age_str}")
+            if age.total_seconds() > 86400:
+                print(f"  \033[93mWarning: Dashboard data is stale\033[0m")
+                print(f"  Run: health generate")
+        else:
+            print("  \033[91mNo dashboard data files\033[0m")
+            print("  Run: health generate")
+    else:
+        print(f"  \033[91mDashboard path does not exist\033[0m")
+
+    print()
+
+
+def cmd_deep(args):
+    """Run deep analysis."""
+    from deep_analysis import main as deep_main
+    deep_main()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog='health',
+        description='Health Analytics CLI - Analyze your Apple Health data',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  health status                  Show system status
+  health dashboard               Start dashboard server
+  health generate                Generate dashboard data
+  health analyze 2026-01-25      Analyze specific date
+  health daily                   Run daily health check
+        """
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # dashboard command
+    dashboard_parser = subparsers.add_parser('dashboard', help='Start the dashboard server')
+    dashboard_parser.add_argument('--port', type=int, default=8080, help='Port number (default: 8080)')
+    dashboard_parser.add_argument('--no-browser', action='store_true', help='Do not open browser')
+
+    # generate command
+    generate_parser = subparsers.add_parser('generate', help='Generate dashboard data files')
+    generate_parser.add_argument('--days', type=int, default=30, help='Days of data to process')
+
+    # daily command
+    daily_parser = subparsers.add_parser('daily', help='Run daily health check')
+    daily_parser.add_argument('--notify', action='store_true', help='Send notifications')
+
+    # analyze command
+    analyze_parser = subparsers.add_parser('analyze', help='Analyze a specific date')
+    analyze_parser.add_argument('date', help='Date to analyze (YYYY-MM-DD)')
+
+    # weekly command
+    weekly_parser = subparsers.add_parser('weekly', help='Generate weekly summary')
+
+    # explore command
+    explore_parser = subparsers.add_parser('explore', help='Explore data structure')
+
+    # deep command
+    deep_parser = subparsers.add_parser('deep', help='Run deep analysis')
+
+    # config command
+    config_parser = subparsers.add_parser('config', help='Show configuration')
+
+    # status command
+    status_parser = subparsers.add_parser('status', help='Show system status')
+
+    args = parser.parse_args()
+
+    if args.command is None:
+        parser.print_help()
+        return 1
+
+    commands = {
+        'dashboard': cmd_dashboard,
+        'generate': cmd_generate,
+        'daily': cmd_daily,
+        'analyze': cmd_analyze,
+        'weekly': cmd_weekly,
+        'explore': cmd_explore,
+        'deep': cmd_deep,
+        'config': cmd_config,
+        'status': cmd_status,
+    }
+
+    if args.command in commands:
+        try:
+            commands[args.command](args)
+            return 0
+        except KeyboardInterrupt:
+            print("\n\033[93mInterrupted\033[0m")
+            return 130
+        except Exception as e:
+            print(f"\033[91mError: {e}\033[0m", file=sys.stderr)
+            return 1
+    else:
+        parser.print_help()
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
