@@ -1,7 +1,8 @@
 # Health data - NEVER commit personal health data!
 data/
 *.json
-*.csv
+!dashboard/data/*.json
+!tests/fixtures/*.json
 
 # Python
 __pycache__/
@@ -12,30 +13,28 @@ __pycache__/
 venv/
 env/
 ENV/
+.venv/
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
 *.egg
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Cache
+.cache/
+
+# Logs (keep directory, ignore contents)
+logs/*
+!logs/.gitkeep
 
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
 ._*
 
 # IDE
@@ -45,25 +44,11 @@ wheels/
 *.swo
 *~
 
-# Output files
-visualizations/*.png
-visualizations/*.jpg
-visualizations/*.pdf
-visualizations/*.html
-
-# Logs
-*.log
-
 # Environment variables
 .env
 .env.local
+.env.*.local
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.hypothesis/
-
-# Allow test fixture JSON files
-!tests/fixtures/*.json
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
