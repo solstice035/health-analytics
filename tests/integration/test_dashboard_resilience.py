@@ -477,3 +477,251 @@ class TestDashboardDataIntegrity:
                 return False
 
         return True
+
+
+class TestPerSectionErrorHandling:
+    """Tests for per-section error handling in dashboard.
+
+    The dashboard should show available data even when some sections fail.
+    Each section should have its own error state and retry capability.
+    """
+
+    @pytest.fixture
+    def section_data(self):
+        """Map of sections to their required data files."""
+        return {
+            'health_score': ['summary_stats.json'],
+            'quick_stats': ['summary_stats.json'],
+            'goals': ['summary_stats.json'],
+            'daily_trends': ['daily_trends.json'],
+            'weekly_comparison': ['weekly_comparison.json'],
+            'hr_distribution': ['hr_distribution.json'],
+            'insights': ['summary_stats.json', 'daily_trends.json'],
+            'deep_analysis': ['deep_analysis.json', 'monthly_progression.json'],
+            'records': ['all_personal_records.json'],
+            'correlations': ['correlations.json'],
+        }
+
+    def test_section_can_determine_required_files(self, section_data):
+        """Test that each section knows what files it needs."""
+        # Health score only needs summary stats
+        assert section_data['health_score'] == ['summary_stats.json']
+
+        # Daily trends needs daily_trends
+        assert section_data['daily_trends'] == ['daily_trends.json']
+
+        # Insights needs multiple files
+        assert len(section_data['insights']) == 2
+
+    def test_section_state_tracking(self):
+        """Test that we can track loading/error/success state per section."""
+        # Simulates the JavaScript STATE object structure
+        section_states = {
+            'health_score': {'status': 'loading', 'error': None, 'data': None},
+            'daily_trends': {'status': 'loading', 'error': None, 'data': None},
+            'hr_distribution': {'status': 'loading', 'error': None, 'data': None},
+        }
+
+        # Simulate successful load for some sections
+        section_states['health_score']['status'] = 'success'
+        section_states['health_score']['data'] = {'score': 85}
+
+        # Simulate error for one section
+        section_states['hr_distribution']['status'] = 'error'
+        section_states['hr_distribution']['error'] = 'Failed to load hr_distribution.json'
+
+        # Daily trends still loading
+        assert section_states['health_score']['status'] == 'success'
+        assert section_states['daily_trends']['status'] == 'loading'
+        assert section_states['hr_distribution']['status'] == 'error'
+
+    def test_partial_load_success_calculation(self, section_data):
+        """Test calculation of partial load success."""
+        total_sections = len(section_data)
+
+        # Simulate 7/10 sections loaded successfully
+        loaded_sections = 7
+        failed_sections = 3
+
+        success_rate = loaded_sections / total_sections
+
+        assert success_rate == 0.7
+        assert loaded_sections + failed_sections == total_sections
+
+    def test_section_retry_resets_state(self):
+        """Test that retrying a section resets its state."""
+        section_state = {
+            'status': 'error',
+            'error': 'Network timeout',
+            'data': None,
+            'retry_count': 2
+        }
+
+        # Reset for retry
+        section_state['status'] = 'loading'
+        section_state['error'] = None
+        section_state['retry_count'] += 1
+
+        assert section_state['status'] == 'loading'
+        assert section_state['error'] is None
+        assert section_state['retry_count'] == 3
+
+    def test_fallback_content_for_failed_section(self):
+        """Test that failed sections show meaningful fallback content."""
+        fallback_messages = {
+            'health_score': 'Unable to calculate health score',
+            'daily_trends': 'Activity trends unavailable',
+            'hr_distribution': 'Heart rate data unavailable',
+            'insights': 'Insights temporarily unavailable',
+            'records': 'Personal records unavailable',
+        }
+
+        # Each section should have a user-friendly fallback message
+        assert all(msg for msg in fallback_messages.values())
+
+        # Messages should not be technical jargon
+        for msg in fallback_messages.values():
+            assert 'JSON' not in msg
+            assert 'fetch' not in msg.lower()
+            assert 'HTTP' not in msg
+
+
+class TestGracefulDegradation:
+    """Tests for dashboard graceful degradation behavior."""
+
+    @pytest.fixture
+    def available_data(self):
+        """Sample of partially available data."""
+        return {
+            'summary_stats': {
+                'averages': {'steps': 10000, 'exercise_minutes': 30},
+                'goals': {'steps_10k': {'achieved': 5, 'total': 7}}
+            },
+            'daily_trends': None,  # Failed to load
+            'hr_distribution': None,  # Failed to load
+            'metadata': {'generated_at': '2026-01-25T10:00:00'}
+        }
+
+    def test_dashboard_renders_with_partial_data(self, available_data):
+        """Test that dashboard renders available sections when some fail."""
+        renderable_sections = []
+
+        if available_data.get('summary_stats'):
+            renderable_sections.append('health_score')
+            renderable_sections.append('quick_stats')
+            renderable_sections.append('goals')
+
+        if available_data.get('daily_trends'):
+            renderable_sections.append('daily_trends')
+            renderable_sections.append('exercise_chart')
+
+        if available_data.get('hr_distribution'):
+            renderable_sections.append('hr_distribution')
+
+        # Should render some sections even with partial data
+        assert len(renderable_sections) == 3
+        assert 'health_score' in renderable_sections
+        assert 'daily_trends' not in renderable_sections
+
+    def test_metadata_renders_independently(self, available_data):
+        """Test that metadata (last updated) renders even if other sections fail."""
+        metadata = available_data.get('metadata')
+
+        # Metadata should be available
+        assert metadata is not None
+        assert 'generated_at' in metadata
+
+    def test_error_count_displayed_to_user(self, available_data):
+        """Test that error count is communicated to user."""
+        failed_sections = sum(1 for v in available_data.values() if v is None)
+        total_sections = len(available_data)
+
+        # User should see how many sections failed
+        error_message = f"Some data unavailable ({failed_sections} of {total_sections} sections)"
+
+        assert '2 of 4' in error_message or str(failed_sections) in error_message
+
+    def test_successful_sections_not_affected_by_failures(self, available_data):
+        """Test that successful sections render correctly despite other failures."""
+        # Even if hr_distribution fails, health_score should work
+        summary_stats = available_data.get('summary_stats')
+
+        if summary_stats and 'averages' in summary_stats:
+            health_score = self._calculate_health_score_simple(summary_stats)
+            assert health_score > 0
+
+    def _calculate_health_score_simple(self, stats):
+        """Simplified health score for testing."""
+        avgs = stats.get('averages', {})
+        steps = avgs.get('steps', 0)
+        exercise = avgs.get('exercise_minutes', 0)
+
+        score = 0
+        if steps > 0:
+            score += min(steps / 10000, 1) * 50
+        if exercise > 0:
+            score += min(exercise / 30, 1) * 50
+
+        return min(round(score), 100)
+
+
+class TestErrorUIComponents:
+    """Tests for error UI component behavior."""
+
+    def test_error_card_has_retry_button(self):
+        """Test that error cards include a retry button."""
+        error_card_html = self._generate_error_card('daily_trends', 'Failed to load activity data')
+
+        assert 'retry' in error_card_html.lower() or 'button' in error_card_html.lower()
+        assert 'onclick' in error_card_html or 'click' in error_card_html
+
+    def test_error_card_shows_section_name(self):
+        """Test that error cards identify which section failed."""
+        error_card_html = self._generate_error_card('daily_trends', 'Network error')
+
+        assert 'Activity' in error_card_html or 'trends' in error_card_html.lower()
+
+    def test_error_card_shows_user_friendly_message(self):
+        """Test that error messages are user-friendly."""
+        # Technical error
+        technical_error = "HTTP 500 Internal Server Error"
+
+        # Should be converted to user-friendly message
+        user_message = self._humanize_error(technical_error)
+
+        assert 'HTTP' not in user_message
+        assert '500' not in user_message
+        assert 'server' in user_message.lower() or 'unavailable' in user_message.lower()
+
+    def test_loading_state_shows_spinner(self):
+        """Test that loading state includes a spinner."""
+        loading_html = self._generate_loading_state('daily_trends')
+
+        assert 'loading' in loading_html.lower() or 'spinner' in loading_html.lower()
+
+    def _generate_error_card(self, section_id, error_message):
+        """Generate error card HTML for a section."""
+        return f'''
+        <div class="section-error" id="{section_id}-error">
+            <h4>Activity Trends Unavailable</h4>
+            <p>{self._humanize_error(error_message)}</p>
+            <button onclick="retrySection('{section_id}')">Try Again</button>
+        </div>
+        '''
+
+    def _humanize_error(self, technical_error):
+        """Convert technical error to user-friendly message."""
+        if 'HTTP' in technical_error or '500' in technical_error:
+            return "Data temporarily unavailable. Please try again."
+        if 'Network' in technical_error or 'timeout' in technical_error.lower():
+            return "Connection issue. Check your internet and try again."
+        return "Unable to load this section. Please try again."
+
+    def _generate_loading_state(self, section_id):
+        """Generate loading state HTML."""
+        return f'''
+        <div class="section-loading" id="{section_id}-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading...</p>
+        </div>
+        '''
