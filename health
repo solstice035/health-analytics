@@ -87,6 +87,48 @@ def cmd_config(args):
         print(f"  {status} {name}: {info['path']}{extra}")
 
 
+def cmd_cache(args):
+    """Manage the cache."""
+    from health_analytics.cache import get_cache
+
+    cache = get_cache()
+
+    if args.action == 'stats':
+        print("\033[1mCache Statistics\033[0m")
+        print("=" * 40)
+        stats = cache.get_stats()
+        print(f"  Entries:       {stats['entries']}")
+        print(f"  Size:          {stats['total_size_mb']} MB")
+        print(f"  Hits:          {stats['hits']}")
+        print(f"  Misses:        {stats['misses']}")
+        print(f"  Hit Rate:      {stats['hit_rate']}%")
+        print(f"  Invalidations: {stats['invalidations']}")
+        print(f"  Directory:     {stats['cache_dir']}")
+
+    elif args.action == 'clear':
+        count = cache.clear()
+        print(f"\033[92m✓\033[0m Cleared {count} cache entries")
+
+    elif args.action == 'warm':
+        print("Warming cache by pre-loading recent data...")
+        from health_analytics.cache import cached_json_read
+        from datetime import datetime, timedelta
+
+        data_path = config.health_data_path
+        count = 0
+        for i in range(30):  # Last 30 days
+            date = datetime.now() - timedelta(days=i)
+            date_str = date.strftime("%Y-%m-%d")
+            file_path = data_path / f"HealthAutoExport-{date_str}.json"
+            if file_path.exists():
+                cached_json_read(file_path)
+                count += 1
+
+        print(f"\033[92m✓\033[0m Cached {count} health data files")
+        stats = cache.get_stats()
+        print(f"  Cache size: {stats['total_size_mb']} MB")
+
+
 def cmd_status(args):
     """Show system status."""
     from datetime import datetime, timedelta
@@ -210,6 +252,11 @@ Examples:
     # status command
     status_parser = subparsers.add_parser('status', help='Show system status')
 
+    # cache command
+    cache_parser = subparsers.add_parser('cache', help='Manage the data cache')
+    cache_parser.add_argument('action', choices=['stats', 'clear', 'warm'],
+                              help='Action: stats (show), clear (delete all), warm (pre-load)')
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -226,6 +273,7 @@ Examples:
         'deep': cmd_deep,
         'config': cmd_config,
         'status': cmd_status,
+        'cache': cmd_cache,
     }
 
     if args.command in commands:
