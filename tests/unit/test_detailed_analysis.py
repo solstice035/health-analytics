@@ -144,6 +144,22 @@ class TestCalculateTotals:
         assert totals['flights'] == 8  # 3 + 5
 
     @pytest.mark.unit
+    def test_calculates_daylight_minutes(self):
+        """Should calculate total time in daylight."""
+        metrics = {
+            'time_in_daylight': {
+                'units': 'min',
+                'count': 3,
+                'data': [{'qty': 30}, {'qty': 45}, {'qty': 25}]
+            }
+        }
+
+        totals = calculate_totals(metrics)
+
+        assert 'daylight_minutes' in totals
+        assert totals['daylight_minutes'] == 100  # 30 + 45 + 25
+
+    @pytest.mark.unit
     def test_handles_missing_metrics(self):
         """Should handle missing metrics gracefully."""
         metrics = {
@@ -231,6 +247,38 @@ class TestGetKeyReadings:
         readings = get_key_readings(metrics)
 
         assert 'resting_hr' not in readings
+
+    @pytest.mark.unit
+    def test_extracts_walking_heart_rate(self):
+        """Should extract walking heart rate average."""
+        metrics = {
+            'walking_heart_rate_average': {
+                'units': 'bpm',
+                'count': 1,
+                'data': [{'qty': 95}]
+            }
+        }
+
+        readings = get_key_readings(metrics)
+
+        assert 'walking_hr' in readings
+        assert readings['walking_hr'] == 95
+
+    @pytest.mark.unit
+    def test_extracts_blood_oxygen(self):
+        """Should extract blood oxygen saturation."""
+        metrics = {
+            'blood_oxygen_saturation': {
+                'units': '%',
+                'count': 3,
+                'data': [{'qty': 97}, {'qty': 98}, {'qty': 99}]
+            }
+        }
+
+        readings = get_key_readings(metrics)
+
+        assert 'blood_oxygen' in readings
+        assert readings['blood_oxygen'] == 98  # Average
 
 
 class TestGetHeartRateStats:
@@ -359,6 +407,193 @@ class TestDataProcessingPipeline:
         assert totals['steps'] == 5000
         assert isinstance(readings, dict)
         assert hr_stats is None  # No HR data
+
+
+class TestAnalyzeDate:
+    """Tests for analyze_date function."""
+
+    @pytest.mark.unit
+    def test_returns_none_for_missing_file(self, tmp_path, capsys):
+        """Should return None when file doesn't exist."""
+        from unittest.mock import patch
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            from detailed_analysis import analyze_date
+            result = analyze_date("2026-01-25")
+
+        assert result is None
+        captured = capsys.readouterr()
+        assert "not found" in captured.out.lower()
+
+    @pytest.mark.unit
+    def test_returns_none_when_file_unreadable(self, tmp_path, capsys):
+        """Should return None when file can't be read."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text("invalid json")
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=None):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    result = analyze_date("2026-01-25")
+
+        assert result is None
+        captured = capsys.readouterr()
+        assert "could not read" in captured.out.lower()
+
+    @pytest.mark.unit
+    def test_returns_none_for_empty_metrics(self, tmp_path, capsys):
+        """Should return None when no metrics found."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value={}):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    result = analyze_date("2026-01-25")
+
+        assert result is None
+        captured = capsys.readouterr()
+        assert "no metrics" in captured.out.lower()
+
+    @pytest.mark.unit
+    def test_returns_dict_on_success(self, tmp_path, capsys, sample_health_data):
+        """Should return analysis dict on successful analysis."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    result = analyze_date("2026-01-25")
+
+        assert result is not None
+        assert 'totals' in result
+        assert 'readings' in result
+        assert 'metrics' in result
+
+    @pytest.mark.unit
+    def test_prints_daily_totals(self, tmp_path, capsys, sample_health_data):
+        """Should print daily totals section."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    analyze_date("2026-01-25")
+
+        captured = capsys.readouterr()
+        assert "DAILY TOTALS" in captured.out
+        assert "Steps:" in captured.out
+
+    @pytest.mark.unit
+    def test_prints_key_readings(self, tmp_path, capsys, sample_health_data):
+        """Should print key health readings section."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    analyze_date("2026-01-25")
+
+        captured = capsys.readouterr()
+        assert "KEY HEALTH READINGS" in captured.out
+
+    @pytest.mark.unit
+    def test_prints_heart_rate_stats(self, tmp_path, capsys, sample_health_data):
+        """Should print heart rate statistics."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    analyze_date("2026-01-25")
+
+        captured = capsys.readouterr()
+        assert "HEART RATE THROUGHOUT DAY" in captured.out
+
+    @pytest.mark.unit
+    def test_prints_available_metrics(self, tmp_path, capsys, sample_health_data):
+        """Should print available metrics list."""
+        from unittest.mock import patch
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    from detailed_analysis import analyze_date
+                    analyze_date("2026-01-25")
+
+        captured = capsys.readouterr()
+        assert "AVAILABLE METRICS" in captured.out
+
+
+class TestMain:
+    """Tests for main entry point."""
+
+    @pytest.mark.unit
+    def test_returns_zero_on_success(self, tmp_path, sample_health_data):
+        """Should return 0 when analysis succeeds."""
+        from unittest.mock import patch
+        import sys
+        file_path = tmp_path / "HealthAutoExport-2026-01-25.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    with patch.object(sys, 'argv', ['detailed_analysis.py', '2026-01-25']):
+                        from detailed_analysis import main
+                        result = main()
+
+        assert result == 0
+
+    @pytest.mark.unit
+    def test_returns_one_on_failure(self, tmp_path):
+        """Should return 1 when analysis fails."""
+        from unittest.mock import patch
+        import sys
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch.object(sys, 'argv', ['detailed_analysis.py', '2026-01-25']):
+                from detailed_analysis import main
+                result = main()
+
+        assert result == 1
+
+    @pytest.mark.unit
+    def test_uses_yesterday_by_default(self, tmp_path, sample_health_data):
+        """Should default to yesterday's date when no arg provided."""
+        from unittest.mock import patch
+        from datetime import datetime, timedelta
+        import sys
+
+        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        file_path = tmp_path / f"HealthAutoExport-{yesterday}.json"
+        file_path.write_text('{}')
+
+        with patch('detailed_analysis.HEALTH_DATA_PATH', tmp_path):
+            with patch('detailed_analysis.read_json_safe', return_value=sample_health_data):
+                with patch('detailed_analysis.get_icloud_status', return_value="local"):
+                    with patch.object(sys, 'argv', ['detailed_analysis.py']):
+                        from detailed_analysis import main
+                        result = main()
+
+        assert result == 0
 
 
 class TestEdgeCases:
