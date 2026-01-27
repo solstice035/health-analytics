@@ -435,6 +435,43 @@
         .error-state h4 { color: var(--accent-red); margin-bottom: 8px; }
         .error-state p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; }
         .error-state button { padding: 8px 20px; background: var(--accent-red); border: none; border-radius: var(--radius-md); color: white; font-weight: 500; cursor: pointer; }
+
+        /* Section-level error state */
+        .section-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            min-height: 200px;
+            background: rgba(245, 158, 11, 0.05);
+            border-radius: var(--radius-md);
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+        }
+        .section-error .error-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.8; }
+        .section-error h4 { color: var(--accent-orange); margin-bottom: 8px; font-size: 0.95rem; font-weight: 600; }
+        .section-error p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px; max-width: 280px; }
+        .section-error .retry-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid var(--accent-orange);
+            border-radius: var(--radius-md);
+            color: var(--accent-orange);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .section-error .retry-btn:hover {
+            background: var(--accent-orange);
+            color: white;
+        }
+        .section-error .retry-btn .refresh-icon { font-size: 1rem; }
+        .section-error .loading-spinner { width: 24px; height: 24px; margin-bottom: 8px; }
         .empty-chart { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); }
         .empty-chart-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
 
@@ -701,7 +738,239 @@
 
     <script>
         const CONFIG = { dataPath: 'data/', retryDelay: 2000, maxRetries: 3 };
-        const STATE = { charts: {}, data: {}, deepData: {}, isLoading: false, activeTab: 'overview' };
+        const STATE = { charts: {}, data: {}, deepData: {}, isLoading: false, activeTab: 'overview', sections: {} };
+
+        // Section definitions with their required data files
+        const SECTIONS = {
+            healthScore: { files: ['summary_stats'], label: 'Health Score', container: 'health-score-card' },
+            quickStats: { files: ['summary_stats'], label: 'Quick Stats', container: 'quickStatsRow1' },
+            goals: { files: ['summary_stats'], label: 'Daily Goals', container: 'goalsGrid' },
+            dailyTrends: { files: ['daily_trends'], label: 'Activity Trends', container: 'dailyTrendsChart' },
+            weeklyComparison: { files: ['weekly_comparison'], label: 'Weekly Comparison', container: 'weeklyComparisonChart' },
+            hrDistribution: { files: ['hr_distribution'], label: 'HR Distribution', container: 'hrDistributionChart' },
+            goalsProgress: { files: ['goals_progress'], label: 'Goals Progress', container: 'goalsProgressChart' },
+            insights: { files: ['summary_stats'], label: 'Quick Insights', container: 'insightsGrid' },
+            hrTrends: { files: ['daily_trends'], label: 'Heart Rate Trends', container: 'hrTrendsChart' },
+            exercise: { files: ['daily_trends'], label: 'Exercise', container: 'exerciseChart' },
+            standHours: { files: ['daily_trends'], label: 'Stand Hours', container: 'standHoursChart' },
+            // Deep analysis sections
+            monthlyProgression: { files: ['monthly_progression'], label: 'Monthly Progression', container: 'monthlyProgressionChart', deep: true },
+            weeklyPatterns: { files: ['weekly_patterns'], label: 'Weekly Patterns', container: 'weeklyPatternsChart', deep: true },
+            trendComparison: { files: ['monthly_progression'], label: 'Trend Comparison', container: 'trendCards', deep: true },
+            vo2Max: { files: ['monthly_progression'], label: 'VO2 Max', container: 'vo2MaxChart', deep: true },
+            correlations: { files: ['correlations'], label: 'Correlations', container: 'correlationsContainer', deep: true },
+            monthlyHR: { files: ['monthly_progression'], label: 'Monthly HR', container: 'monthlyHRChart', deep: true },
+            anomalies: { files: ['deep_analysis'], label: 'Notable Days', container: 'highIntensityDays', deep: true },
+            records: { files: ['all_personal_records'], label: 'Personal Records', container: 'recordsGrid', deep: true },
+            streaks: { files: ['deep_analysis'], label: 'Streaks', container: 'streaksCards', deep: true },
+            deepInsights: { files: ['deep_insights'], label: 'Deep Insights', container: 'deepInsightsGrid', deep: true },
+            comparison: { files: ['deep_analysis'], label: 'Period Comparison', container: 'comparisonCards', deep: true }
+        };
+
+        // Initialize section states
+        Object.keys(SECTIONS).forEach(function(id) {
+            STATE.sections[id] = { status: 'pending', error: null, retryCount: 0 };
+        });
+
+        // Helper to humanize error messages
+        function humanizeError(error) {
+            if (!error) return 'Data unavailable';
+            var msg = error.toString();
+            if (msg.includes('HTTP 5')) return 'Server temporarily unavailable';
+            if (msg.includes('HTTP 4')) return 'Data file not found';
+            if (msg.includes('Network') || msg.includes('fetch')) return 'Connection issue';
+            if (msg.includes('JSON') || msg.includes('parse')) return 'Data format error';
+            return 'Unable to load data';
+        }
+
+        // Generate error UI for a section using safe DOM methods
+        function renderSectionError(sectionId, error) {
+            var section = SECTIONS[sectionId];
+            if (!section) return;
+            var container = document.getElementById(section.container);
+            if (!container) return;
+
+            var parent = container.closest('.chart-card') || container.closest('.health-score-card') || container.parentElement;
+            if (!parent) return;
+
+            // Create error UI using DOM methods (safer than innerHTML)
+            var errorDiv = document.createElement('div');
+            errorDiv.className = 'section-error';
+            errorDiv.dataset.section = sectionId;
+
+            var iconDiv = document.createElement('div');
+            iconDiv.className = 'error-icon';
+            iconDiv.textContent = '\u26A0\uFE0F'; // warning emoji
+
+            var heading = document.createElement('h4');
+            heading.textContent = section.label + ' Unavailable';
+
+            var message = document.createElement('p');
+            message.textContent = humanizeError(error);
+
+            var retryBtn = document.createElement('button');
+            retryBtn.className = 'retry-btn';
+            retryBtn.onclick = function() { retrySection(sectionId); };
+
+            var refreshIcon = document.createElement('span');
+            refreshIcon.className = 'refresh-icon';
+            refreshIcon.textContent = '\u21BB'; // refresh symbol
+
+            retryBtn.appendChild(refreshIcon);
+            retryBtn.appendChild(document.createTextNode(' Try Again'));
+
+            errorDiv.appendChild(iconDiv);
+            errorDiv.appendChild(heading);
+            errorDiv.appendChild(message);
+            errorDiv.appendChild(retryBtn);
+
+            // Clear container and add error
+            if (container.tagName === 'CANVAS') {
+                while (container.parentElement.firstChild) {
+                    container.parentElement.removeChild(container.parentElement.firstChild);
+                }
+                container.parentElement.appendChild(errorDiv);
+            } else {
+                while (container.firstChild) {
+                    container.removeChild(container.firstChild);
+                }
+                container.appendChild(errorDiv);
+            }
+        }
+
+        // Retry loading a specific section
+        async function retrySection(sectionId) {
+            var section = SECTIONS[sectionId];
+            if (!section) return;
+
+            STATE.sections[sectionId].status = 'loading';
+            STATE.sections[sectionId].error = null;
+            STATE.sections[sectionId].retryCount++;
+
+            // Show loading state
+            var container = document.getElementById(section.container);
+            if (container) {
+                var errorEl = container.closest('.chart-card')?.querySelector('.section-error') ||
+                              container.querySelector('.section-error');
+                if (errorEl) {
+                    while (errorEl.firstChild) {
+                        errorEl.removeChild(errorEl.firstChild);
+                    }
+                    var spinner = document.createElement('div');
+                    spinner.className = 'loading-spinner';
+                    var loadingText = document.createElement('p');
+                    loadingText.textContent = 'Retrying...';
+                    errorEl.appendChild(spinner);
+                    errorEl.appendChild(loadingText);
+                }
+            }
+
+            // Determine which files to reload
+            var isDeep = section.deep;
+
+            for (var i = 0; i < section.files.length; i++) {
+                var fileKey = section.files[i];
+                var fileName = fileKey + '.json';
+                var dataKey = fileKey.replace(/_/g, '');
+                var data = await loadJSON(fileName);
+                if (data) {
+                    if (isDeep) {
+                        STATE.deepData[dataKey] = data;
+                    } else {
+                        STATE.data[dataKey] = data;
+                    }
+                }
+            }
+
+            // Re-render the section
+            renderSection(sectionId);
+            updateStatusIndicator();
+        }
+
+        // Render a specific section based on available data
+        function renderSection(sectionId) {
+            var section = SECTIONS[sectionId];
+            if (!section) return;
+
+            var hasRequiredData = section.files.every(function(f) {
+                var key = f.replace(/_/g, '');
+                return section.deep ? STATE.deepData[key] : STATE.data[key];
+            });
+
+            if (!hasRequiredData) {
+                STATE.sections[sectionId].status = 'error';
+                STATE.sections[sectionId].error = 'Required data not available';
+                renderSectionError(sectionId, STATE.sections[sectionId].error);
+                return;
+            }
+
+            STATE.sections[sectionId].status = 'success';
+
+            try {
+                switch(sectionId) {
+                    case 'healthScore': renderHealthScore(STATE.data.summarystats); break;
+                    case 'quickStats': renderQuickStats(STATE.data.summarystats); break;
+                    case 'goals': renderGoals(STATE.data.summarystats); break;
+                    case 'dailyTrends': renderDailyTrends(STATE.data.dailytrends); break;
+                    case 'weeklyComparison': renderWeeklyComparison(STATE.data.weeklycomparison); break;
+                    case 'hrDistribution': renderHRDistribution(STATE.data.hrdistribution); break;
+                    case 'goalsProgress': renderGoalsProgress(STATE.data.goalsprogress); break;
+                    case 'insights': renderInsights(STATE.data); break;
+                    case 'hrTrends': renderHRTrends(STATE.data.dailytrends); break;
+                    case 'exercise': renderExerciseChart(STATE.data.dailytrends); break;
+                    case 'standHours': renderStandHoursChart(STATE.data.dailytrends); break;
+                    case 'monthlyProgression': renderMonthlyProgression(); break;
+                    case 'weeklyPatterns': renderWeeklyPatterns(); break;
+                    case 'trendComparison': renderTrendComparison(); break;
+                    case 'vo2Max': renderVO2MaxChart(); break;
+                    case 'correlations': renderCorrelations(); break;
+                    case 'monthlyHR': renderMonthlyHRChart(); break;
+                    case 'anomalies': renderAnomalies(); break;
+                    case 'records': renderAllRecords(); break;
+                    case 'streaks': renderStreaks(); break;
+                    case 'deepInsights': renderDeepInsights(); break;
+                    case 'comparison': renderComparison(); break;
+                }
+            } catch (err) {
+                console.error('Error rendering section', sectionId, err);
+                STATE.sections[sectionId].status = 'error';
+                STATE.sections[sectionId].error = err.message;
+                renderSectionError(sectionId, err.message);
+            }
+        }
+
+        // Get dashboard status summary
+        function getDashboardStatus() {
+            var total = Object.keys(STATE.sections).length;
+            var loaded = Object.values(STATE.sections).filter(function(s) { return s.status === 'success'; }).length;
+            var failed = Object.values(STATE.sections).filter(function(s) { return s.status === 'error'; }).length;
+            var pending = total - loaded - failed;
+            return { total: total, loaded: loaded, failed: failed, pending: pending };
+        }
+
+        // Update status indicator based on load results
+        function updateStatusIndicator() {
+            var status = getDashboardStatus();
+            var indicator = document.querySelector('.status-indicator');
+            var updatedEl = document.getElementById('lastUpdated');
+
+            if (status.failed > 0 && status.loaded > 0) {
+                // Partial success - yellow
+                indicator.style.background = 'var(--accent-orange)';
+                if (STATE.data.metadata) {
+                    updatedEl.textContent = 'Updated: ' + new Date(STATE.data.metadata.generated_at).toLocaleString() + ' (' + status.failed + ' sections unavailable)';
+                }
+            } else if (status.failed > 0 && status.loaded === 0) {
+                // Complete failure - red
+                indicator.style.background = 'var(--accent-red)';
+            } else {
+                // Success - green
+                indicator.style.background = 'var(--accent-green)';
+                if (STATE.data.metadata) {
+                    updatedEl.textContent = 'Updated: ' + new Date(STATE.data.metadata.generated_at).toLocaleString();
+                }
+            }
+        }
         Chart.defaults.color = '#8b8b9e';
         Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
         Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, sans-serif';
@@ -721,29 +990,28 @@
         }
 
         function renderTabContent(tabId) {
+            var sectionsToRender = [];
             switch(tabId) {
                 case 'trends':
-                    renderMonthlyProgression();
-                    renderWeeklyPatterns();
-                    renderTrendComparison();
+                    sectionsToRender = ['monthlyProgression', 'weeklyPatterns', 'trendComparison'];
                     break;
                 case 'fitness':
-                    renderVO2MaxChart();
-                    renderCorrelations();
+                    sectionsToRender = ['vo2Max', 'correlations'];
                     break;
                 case 'heart':
-                    renderMonthlyHRChart();
-                    renderAnomalies();
+                    sectionsToRender = ['monthlyHR', 'anomalies'];
                     break;
                 case 'records':
-                    renderAllRecords();
-                    renderStreaks();
+                    sectionsToRender = ['records', 'streaks'];
                     break;
                 case 'insights':
-                    renderDeepInsights();
-                    renderComparison();
+                    sectionsToRender = ['deepInsights', 'comparison'];
                     break;
             }
+            sectionsToRender.forEach(function(sectionId) {
+                renderSection(sectionId);
+            });
+            updateStatusIndicator();
         }
 
         async function loadJSON(filename, retries) {
@@ -1327,29 +1595,50 @@
             STATE.isLoading = true;
             document.getElementById('refreshBtn').disabled = true;
             document.getElementById('refreshBtn').classList.add('loading');
+
+            // Reset section states
+            Object.keys(STATE.sections).forEach(function(id) {
+                STATE.sections[id] = { status: 'loading', error: null, retryCount: 0 };
+            });
+
             try {
                 var result = await loadAllData();
-                if (!result.data) {
-                    document.querySelector('.container').insertAdjacentHTML('afterbegin', '<div class="error-state"><h4>Dashboard Error</h4><p>Failed to load data. Try refreshing.</p><button onclick="refreshDashboard()">Try Again</button></div>');
+
+                // Store whatever data we got (even if partial)
+                if (result.data) {
+                    STATE.data = result.data;
+                }
+                if (result.deepData) {
+                    STATE.deepData = result.deepData;
+                }
+
+                // If we got absolutely nothing, show global error
+                if (!result.data || Object.keys(result.data).length === 0) {
+                    var container = document.querySelector('.container');
+                    var errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-state';
+                    var h4 = document.createElement('h4');
+                    h4.textContent = 'Dashboard Error';
+                    var p = document.createElement('p');
+                    p.textContent = 'Failed to load data. Try refreshing.';
+                    var btn = document.createElement('button');
+                    btn.textContent = 'Try Again';
+                    btn.onclick = refreshDashboard;
+                    errorDiv.appendChild(h4);
+                    errorDiv.appendChild(p);
+                    errorDiv.appendChild(btn);
+                    container.insertBefore(errorDiv, container.firstChild);
                     return;
                 }
-                STATE.data = result.data;
-                STATE.deepData = result.deepData;
 
-                if (result.data.metadata) document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date(result.data.metadata.generated_at).toLocaleString();
+                // Render overview tab sections (gracefully handles missing data)
+                var overviewSections = ['healthScore', 'quickStats', 'goals', 'insights', 'dailyTrends', 'weeklyComparison', 'goalsProgress', 'hrTrends', 'hrDistribution', 'exercise', 'standHours'];
+                overviewSections.forEach(function(sectionId) {
+                    renderSection(sectionId);
+                });
 
-                // Render overview tab
-                renderHealthScore(result.data.summarystats);
-                renderQuickStats(result.data.summarystats);
-                renderGoals(result.data.summarystats);
-                renderInsights(result.data);
-                renderDailyTrends(result.data.dailytrends);
-                renderWeeklyComparison(result.data.weeklycomparison);
-                renderGoalsProgress(result.data.goalsprogress);
-                renderHRTrends(result.data.dailytrends);
-                renderHRDistribution(result.data.hrdistribution);
-                renderExerciseChart(result.data.dailytrends);
-                renderStandHoursChart(result.data.dailytrends);
+                // Update status indicator based on what loaded
+                updateStatusIndicator();
 
             } finally {
                 STATE.isLoading = false;
