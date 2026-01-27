@@ -11,17 +11,22 @@ from collections import Counter, defaultdict
 from datetime import datetime
 import sys
 
+# Add src to path for config module
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 # Import iCloud helper
 try:
     from icloud_helper import read_json_safe, list_available_files, get_icloud_status
 except ImportError:
-    # Fallback if not in same directory
-    import sys
     sys.path.insert(0, str(Path(__file__).parent))
     from icloud_helper import read_json_safe, list_available_files, get_icloud_status
 
-# Path to the health data (symlink to iCloud)
-HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
+# Use centralized config
+try:
+    from health_analytics.config import config
+    HEALTH_DATA_PATH = config.health_data_path
+except ImportError:
+    HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
 
 def find_health_files():
     """Find all JSON health export files."""

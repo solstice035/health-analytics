@@ -21,6 +21,9 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import Dict, List, Optional, Any, Tuple
 
+# Add src to path for config module
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 try:
     from icloud_helper import read_json_safe
     from detailed_analysis import extract_all_metrics, calculate_totals, get_key_readings, get_heart_rate_stats
@@ -29,8 +32,15 @@ except ImportError:
     from icloud_helper import read_json_safe
     from detailed_analysis import extract_all_metrics, calculate_totals, get_key_readings, get_heart_rate_stats
 
-HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
-OUTPUT_PATH = Path(__file__).parent.parent / "dashboard" / "data"
+# Use centralized config
+try:
+    from health_analytics.config import config
+    HEALTH_DATA_PATH = config.health_data_path
+    OUTPUT_PATH = config.dashboard_data_path
+except ImportError:
+    # Fallback for when running standalone
+    HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
+    OUTPUT_PATH = Path(__file__).parent.parent / "dashboard" / "data"
 
 
 def load_date_range(start_date, end_date):

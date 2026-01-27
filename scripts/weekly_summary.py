@@ -8,6 +8,9 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from collections import defaultdict
 
+# Add src to path for config module
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 try:
     from icloud_helper import read_json_safe
     from detailed_analysis import extract_all_metrics, calculate_totals, get_key_readings
@@ -16,7 +19,12 @@ except ImportError:
     from icloud_helper import read_json_safe
     from detailed_analysis import extract_all_metrics, calculate_totals, get_key_readings
 
-HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
+# Use centralized config
+try:
+    from health_analytics.config import config
+    HEALTH_DATA_PATH = config.health_data_path
+except ImportError:
+    HEALTH_DATA_PATH = Path(__file__).parent.parent / "data"
 
 
 def get_week_dates(end_date=None, days=7):
