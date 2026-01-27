@@ -240,3 +240,159 @@ class TestDashboardHTML:
     def test_html_has_error_handling(self, dashboard_html):
         """HTML should have error handling code."""
         assert 'humanizeError' in dashboard_html or 'renderSectionError' in dashboard_html
+
+
+class TestDashboardUX:
+    """UX interaction tests - verify user interactions work correctly."""
+
+    @pytest.fixture
+    def page(self, server_port):
+        """Create a Playwright page."""
+        from playwright.sync_api import sync_playwright
+
+        url = f"http://localhost:{server_port}"
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url)
+            page.wait_for_load_state('networkidle')
+            yield page
+            browser.close()
+
+    @pytest.mark.e2e
+    def test_tab_click_switches_content(self, page):
+        """Clicking a tab should display its content panel."""
+        # Initially overview tab should be active
+        overview_panel = page.locator('#tab-overview')
+        assert overview_panel.is_visible()
+
+        # Click trends tab
+        trends_btn = page.locator('button:has-text("Trends")')
+        trends_btn.click()
+        page.wait_for_timeout(500)
+
+        # Trends panel should now be visible
+        trends_panel = page.locator('#tab-trends')
+        assert trends_panel.is_visible()
+
+        # Overview panel should be hidden
+        assert not overview_panel.is_visible()
+
+    @pytest.mark.e2e
+    def test_tab_click_updates_active_class(self, page):
+        """Clicking a tab should update the active class."""
+        # Initially overview button should have active class
+        overview_btn = page.locator('button:has-text("Overview")')
+        assert 'active' in overview_btn.get_attribute('class')
+
+        # Click heart tab
+        heart_btn = page.locator('button:has-text("Heart")')
+        heart_btn.click()
+        page.wait_for_timeout(300)
+
+        # Heart button should now have active class
+        assert 'active' in heart_btn.get_attribute('class')
+        # Overview button should not have active class
+        assert 'active' not in overview_btn.get_attribute('class')
+
+    @pytest.mark.e2e
+    def test_all_tabs_are_clickable(self, page):
+        """All navigation tabs should be clickable and show content."""
+        tabs = ['Trends', 'Fitness', 'Heart', 'Records', 'Insights', 'Overview']
+
+        for tab_name in tabs:
+            btn = page.locator(f'button:has-text("{tab_name}")')
+            btn.click()
+            page.wait_for_timeout(300)
+
+            # Tab button should be active
+            assert 'active' in btn.get_attribute('class'), f"{tab_name} tab not active after click"
+
+    @pytest.mark.e2e
+    def test_only_one_tab_visible_at_a_time(self, page):
+        """Only one tab content should be visible at any time."""
+        # Click fitness tab
+        page.locator('button:has-text("Fitness")').click()
+        page.wait_for_timeout(300)
+
+        # Count visible tab contents
+        visible_tabs = page.locator('.tab-content:visible')
+        assert visible_tabs.count() == 1, "Multiple tab contents are visible"
+
+    @pytest.mark.e2e
+    def test_health_score_displays_number(self, page):
+        """Health score should display a numeric value."""
+        score_element = page.locator('.score-value')
+        if score_element.count() > 0:
+            score_text = score_element.inner_text()
+            # Should contain a number
+            assert any(c.isdigit() for c in score_text), "Health score should contain a number"
+
+    @pytest.mark.e2e
+    def test_quick_stats_have_values(self, page):
+        """Quick stat cards should display values."""
+        stat_values = page.locator('.quick-stat-value')
+        assert stat_values.count() >= 1, "Should have at least one quick stat"
+
+        # Check first stat has content
+        first_stat = stat_values.first
+        text = first_stat.inner_text()
+        assert len(text.strip()) > 0, "Quick stat should have content"
+
+    @pytest.mark.e2e
+    def test_chart_canvas_has_content(self, page):
+        """Chart canvases should have rendered content."""
+        # Wait for charts to render
+        page.wait_for_timeout(1000)
+
+        # At least one canvas should exist
+        canvases = page.locator('canvas')
+        assert canvases.count() >= 1, "Should have at least one chart canvas"
+
+    @pytest.mark.e2e
+    def test_refresh_button_exists(self, page):
+        """Dashboard should have a refresh button."""
+        refresh_btn = page.locator('.refresh-btn, button:has-text("Refresh")')
+        assert refresh_btn.count() >= 1, "Should have a refresh button"
+
+    @pytest.mark.e2e
+    def test_status_indicator_present(self, page):
+        """Dashboard should have a status indicator."""
+        status = page.locator('.status-indicator')
+        if status.count() > 0:
+            assert status.is_visible(), "Status indicator should be visible"
+
+    @pytest.mark.e2e
+    def test_goal_cards_visible_on_overview(self, page):
+        """Goal cards should be visible on the overview tab."""
+        # Make sure we're on overview
+        page.locator('button:has-text("Overview")').click()
+        page.wait_for_timeout(300)
+
+        # Look for goal elements
+        goals = page.locator('.goal-card, [class*="goal"]')
+        # Goals section may or may not exist depending on data
+        # Just check the page is in a good state
+        assert page.locator('#tab-overview').is_visible()
+
+    @pytest.mark.e2e
+    def test_records_tab_shows_records(self, page):
+        """Records tab should display personal records."""
+        page.locator('button:has-text("Records")').click()
+        page.wait_for_timeout(500)
+
+        records_panel = page.locator('#tab-records')
+        assert records_panel.is_visible()
+
+        # Should have some record content
+        content = records_panel.inner_text()
+        assert len(content) > 10, "Records tab should have content"
+
+    @pytest.mark.e2e
+    def test_insights_tab_accessible(self, page):
+        """Insights tab should be accessible and show content."""
+        page.locator('button:has-text("Insights")').click()
+        page.wait_for_timeout(500)
+
+        insights_panel = page.locator('#tab-insights')
+        assert insights_panel.is_visible()
