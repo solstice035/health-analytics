@@ -23,11 +23,13 @@
             --accent-red: #ef4444;
             --accent-purple: #8b5cf6;
             --accent-pink: #ec4899;
+            --accent-cyan: #06b6d4;
             --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             --gradient-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
             --gradient-orange: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
             --gradient-pink: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            --gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
             --border-color: rgba(255, 255, 255, 0.08);
             --border-glow: rgba(255, 255, 255, 0.15);
             --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -54,11 +56,13 @@
             z-index: -1;
         }
         .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
+
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
             padding: 24px;
             background: var(--bg-card);
             border-radius: var(--radius-xl);
@@ -110,6 +114,43 @@
         .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .refresh-btn.loading .refresh-icon { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 8px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { background: var(--bg-glass); color: var(--text-primary); }
+        .tab-btn.active {
+            background: var(--gradient-blue);
+            color: white;
+        }
+        .tab-btn .tab-icon { font-size: 1.1rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* Health Score Section */
         .health-score-section { display: grid; grid-template-columns: 300px 1fr; gap: 24px; margin-bottom: 32px; }
         .health-score-card {
             background: var(--bg-card);
@@ -151,6 +192,8 @@
         }
         .health-score-card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; position: relative; z-index: 1; }
         .health-score-card .description { color: var(--text-secondary); font-size: 0.85rem; position: relative; z-index: 1; }
+
+        /* Quick Stats */
         .quick-stats { display: flex; flex-direction: column; gap: 16px; }
         .quick-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .quick-stat {
@@ -182,6 +225,8 @@
         .quick-stat-content { flex: 1; min-width: 0; }
         .quick-stat-value { font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
         .quick-stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Goals Section */
         .goals-section { margin-bottom: 32px; }
         .goals-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .goals-header h2 { font-size: 1.1rem; font-weight: 600; }
@@ -235,6 +280,8 @@
         .goal-card .goal-target { font-size: 0.8rem; color: var(--text-muted); }
         .goal-progress-bar { height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; margin-top: 12px; overflow: hidden; }
         .goal-progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease-out; }
+
+        /* Charts Grid */
         .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 32px; }
         .chart-card {
             background: var(--bg-card);
@@ -262,6 +309,9 @@
         .chart-action-btn:hover, .chart-action-btn.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
         .chart-container { position: relative; height: 280px; }
         .chart-container.tall { height: 350px; }
+        .chart-container.short { height: 220px; }
+
+        /* Insights Section */
         .insights-section { margin-bottom: 32px; }
         .insights-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .insights-header h2 { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
@@ -288,6 +338,97 @@
         .insight-icon.warning { background: rgba(245, 158, 11, 0.15); }
         .insight-content h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
         .insight-content p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* Records Grid */
+        .records-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .record-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .record-card:hover { transform: translateY(-4px); border-color: var(--border-glow); }
+        .record-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 12px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+        .record-value { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+        .record-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .record-date { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Trend Cards */
+        .trend-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .trend-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+        }
+        .trend-card .trend-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .trend-card .trend-metric { font-size: 0.85rem; color: var(--text-secondary); }
+        .trend-card .trend-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+        }
+        .trend-change.up { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .trend-change.down { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .trend-change.neutral { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+        .trend-card .trend-values { display: flex; align-items: baseline; gap: 8px; }
+        .trend-card .trend-current { font-size: 1.5rem; font-weight: 700; }
+        .trend-card .trend-previous { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Correlation Cards */
+        .correlation-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .correlation-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .correlation-card p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; }
+        .correlation-bars { display: flex; flex-direction: column; gap: 12px; }
+        .correlation-bar { display: flex; align-items: center; gap: 12px; }
+        .correlation-bar .bar-label { width: 100px; font-size: 0.8rem; color: var(--text-secondary); }
+        .correlation-bar .bar-track { flex: 1; height: 24px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+        .correlation-bar .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 0.75rem; font-weight: 600; }
+        .correlation-bar .bar-fill.blue { background: var(--gradient-blue); }
+        .correlation-bar .bar-fill.green { background: var(--gradient-green); }
+        .correlation-bar .bar-fill.purple { background: var(--gradient-purple); }
+
+        /* Anomaly List */
+        .anomaly-list {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+        }
+        .anomaly-list h4 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .anomaly-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-glass);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+        .anomaly-item:last-child { margin-bottom: 0; }
+        .anomaly-item .anomaly-icon { font-size: 1.2rem; }
+        .anomaly-item .anomaly-content { flex: 1; }
+        .anomaly-item .anomaly-date { font-weight: 600; font-size: 0.9rem; }
+        .anomaly-item .anomaly-value { font-size: 0.8rem; color: var(--text-secondary); }
+
+        /* States */
         .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-secondary); }
         .loading-spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
         .error-state { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); padding: 24px; text-align: center; }
@@ -296,11 +437,26 @@
         .error-state button { padding: 8px 20px; background: var(--accent-red); border: none; border-radius: var(--radius-md); color: white; font-weight: 500; cursor: pointer; }
         .empty-chart { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); }
         .empty-chart-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+
+        /* Section Headers */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-header h2 { font-size: 1.2rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .section-header .section-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            background: var(--bg-glass);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
         footer { text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.8rem; }
         footer a { color: var(--accent-blue); text-decoration: none; }
+
+        /* Responsive */
         @media (max-width: 1200px) { .health-score-section { grid-template-columns: 1fr; } .charts-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .container { padding: 16px; } header { flex-direction: column; gap: 16px; } .header-right { align-items: flex-start; width: 100%; } .goals-grid { grid-template-columns: 1fr; } .quick-stats-row { grid-template-columns: repeat(2, 1fr); } .header-left h1 { font-size: 1.5rem; } .insights-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 480px) { .quick-stats-row { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .container { padding: 16px; } header { flex-direction: column; gap: 16px; } .header-right { align-items: flex-start; width: 100%; } .goals-grid { grid-template-columns: 1fr; } .quick-stats-row { grid-template-columns: repeat(2, 1fr); } .header-left h1 { font-size: 1.5rem; } .insights-grid { grid-template-columns: 1fr; } .tab-nav { flex-wrap: wrap; } .tab-btn { padding: 10px 14px; font-size: 0.8rem; } }
+        @media (max-width: 480px) { .quick-stats-row { grid-template-columns: 1fr; } .records-grid { grid-template-columns: repeat(2, 1fr); } .trend-cards { grid-template-columns: 1fr; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
         .delay-1 { animation-delay: 0.1s; }
@@ -326,90 +482,269 @@
                 </button>
             </div>
         </header>
-        <section class="health-score-section">
-            <div class="health-score-card">
-                <div class="score-ring">
-                    <svg width="160" height="160" viewBox="0 0 160 160">
-                        <defs>
-                            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#10b981"/>
-                                <stop offset="50%" style="stop-color:#3b82f6"/>
-                                <stop offset="100%" style="stop-color:#8b5cf6"/>
-                            </linearGradient>
-                        </defs>
-                        <circle class="bg-circle" cx="80" cy="80" r="65"/>
-                        <circle class="progress-circle" id="scoreCircle" cx="80" cy="80" r="65"/>
-                    </svg>
-                    <div class="score-value" id="healthScore">--</div>
-                </div>
-                <h3>Health Score</h3>
-                <p class="description" id="scoreDescription">Calculating your health metrics...</p>
-                <div class="score-label">Based on 7-day performance</div>
-            </div>
-            <div class="quick-stats">
-                <div class="quick-stats-row" id="quickStatsRow1"></div>
-                <div class="quick-stats-row" id="quickStatsRow2"></div>
-            </div>
-        </section>
-        <section class="goals-section">
-            <div class="goals-header">
-                <h2>🎯 Daily Goals</h2>
-                <div class="goals-streak" id="goalsStreak">🔥 <span id="streakCount">--</span> day streak</div>
-            </div>
-            <div class="goals-grid" id="goalsGrid"></div>
-        </section>
-        <section class="charts-grid">
-            <div class="chart-card full-width">
-                <div class="chart-header">
-                    <div><h3 class="chart-title">📊 Activity Trends</h3><p class="chart-subtitle">30-day steps and energy overview</p></div>
-                    <div class="chart-actions">
-                        <button class="chart-action-btn active" onclick="setTrendsPeriod(30)">30D</button>
-                        <button class="chart-action-btn" onclick="setTrendsPeriod(14)">14D</button>
-                        <button class="chart-action-btn" onclick="setTrendsPeriod(7)">7D</button>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('overview')">
+                <span class="tab-icon">📊</span> Overview
+            </button>
+            <button class="tab-btn" onclick="switchTab('trends')">
+                <span class="tab-icon">📈</span> Trends
+            </button>
+            <button class="tab-btn" onclick="switchTab('fitness')">
+                <span class="tab-icon">🏃</span> Fitness
+            </button>
+            <button class="tab-btn" onclick="switchTab('heart')">
+                <span class="tab-icon">❤️</span> Heart
+            </button>
+            <button class="tab-btn" onclick="switchTab('records')">
+                <span class="tab-icon">🏆</span> Records
+            </button>
+            <button class="tab-btn" onclick="switchTab('insights')">
+                <span class="tab-icon">💡</span> Insights
+            </button>
+        </nav>
+
+        <!-- Overview Tab -->
+        <div id="tab-overview" class="tab-content active">
+            <section class="health-score-section">
+                <div class="health-score-card">
+                    <div class="score-ring">
+                        <svg width="160" height="160" viewBox="0 0 160 160">
+                            <defs>
+                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#10b981"/>
+                                    <stop offset="50%" style="stop-color:#3b82f6"/>
+                                    <stop offset="100%" style="stop-color:#8b5cf6"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="bg-circle" cx="80" cy="80" r="65"/>
+                            <circle class="progress-circle" id="scoreCircle" cx="80" cy="80" r="65"/>
+                        </svg>
+                        <div class="score-value" id="healthScore">--</div>
                     </div>
+                    <h3>Health Score</h3>
+                    <p class="description" id="scoreDescription">Calculating your health metrics...</p>
+                    <div class="score-label">Based on 7-day performance</div>
                 </div>
-                <div class="chart-container tall"><canvas id="dailyTrendsChart"></canvas></div>
+                <div class="quick-stats">
+                    <div class="quick-stats-row" id="quickStatsRow1"></div>
+                    <div class="quick-stats-row" id="quickStatsRow2"></div>
+                </div>
+            </section>
+            <section class="goals-section">
+                <div class="goals-header">
+                    <h2>🎯 Daily Goals</h2>
+                    <div class="goals-streak" id="goalsStreak">🔥 <span id="streakCount">--</span> day streak</div>
+                </div>
+                <div class="goals-grid" id="goalsGrid"></div>
+            </section>
+            <section class="charts-grid">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📊 Activity Trends</h3><p class="chart-subtitle">30-day steps and energy overview</p></div>
+                        <div class="chart-actions">
+                            <button class="chart-action-btn active" onclick="setTrendsPeriod(30)">30D</button>
+                            <button class="chart-action-btn" onclick="setTrendsPeriod(14)">14D</button>
+                            <button class="chart-action-btn" onclick="setTrendsPeriod(7)">7D</button>
+                        </div>
+                    </div>
+                    <div class="chart-container tall"><canvas id="dailyTrendsChart"></canvas></div>
+                </div>
+            </section>
+            <section class="insights-section">
+                <div class="insights-header"><h2>💡 Quick Insights</h2></div>
+                <div class="insights-grid" id="insightsGrid"></div>
+            </section>
+        </div>
+
+        <!-- Trends Tab -->
+        <div id="tab-trends" class="tab-content">
+            <div class="section-header">
+                <h2>📈 Monthly Progression</h2>
+                <span class="section-badge">6-Month View</span>
             </div>
-            <div class="chart-card">
-                <div class="chart-header"><div><h3 class="chart-title">📈 Weekly Comparison</h3><p class="chart-subtitle">12-week step averages</p></div></div>
-                <div class="chart-container"><canvas id="weeklyComparisonChart"></canvas></div>
+            <div class="trend-cards" id="trendCards"></div>
+            <div class="charts-grid">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📅 Monthly Activity</h3><p class="chart-subtitle">Steps and exercise by month</p></div>
+                    </div>
+                    <div class="chart-container tall"><canvas id="monthlyProgressionChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📈 Weekly Comparison</h3><p class="chart-subtitle">12-week step averages</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="weeklyComparisonChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📆 Day of Week</h3><p class="chart-subtitle">Average activity by day</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="weeklyPatternsChart"></canvas></div>
+                </div>
             </div>
-            <div class="chart-card">
-                <div class="chart-header"><div><h3 class="chart-title">🎯 7-Day Goals</h3><p class="chart-subtitle">Daily goal achievements</p></div></div>
-                <div class="chart-container"><canvas id="goalsProgressChart"></canvas></div>
+        </div>
+
+        <!-- Fitness Tab -->
+        <div id="tab-fitness" class="tab-content">
+            <div class="section-header">
+                <h2>🏃 Fitness Trajectory</h2>
+                <span class="section-badge">Long-term Progress</span>
             </div>
-            <div class="chart-card">
-                <div class="chart-header"><div><h3 class="chart-title">💓 Heart Rate Trends</h3><p class="chart-subtitle">Resting HR and HRV over time</p></div></div>
-                <div class="chart-container"><canvas id="hrTrendsChart"></canvas></div>
+            <div class="charts-grid">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📈 VO2 Max Trend</h3><p class="chart-subtitle">Cardiorespiratory fitness over time</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="vo2MaxChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">💪 Exercise Minutes</h3><p class="chart-subtitle">Daily exercise time</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="exerciseChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">🧍 Stand Hours</h3><p class="chart-subtitle">Hourly movement throughout day</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="standHoursChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">🎯 7-Day Goals</h3><p class="chart-subtitle">Daily goal achievements</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="goalsProgressChart"></canvas></div>
+                </div>
             </div>
-            <div class="chart-card">
-                <div class="chart-header"><div><h3 class="chart-title">❤️ HR Zone Distribution</h3><p class="chart-subtitle">Time spent in each zone</p></div></div>
-                <div class="chart-container"><canvas id="hrDistributionChart"></canvas></div>
+            <div class="section-header" style="margin-top: 32px;">
+                <h2>🔗 Correlations Discovered</h2>
             </div>
-            <div class="chart-card">
-                <div class="chart-header"><div><h3 class="chart-title">💪 Exercise Minutes</h3><p class="chart-subtitle">Daily exercise time</p></div></div>
-                <div class="chart-container"><canvas id="exerciseChart"></canvas></div>
+            <div id="correlationsContainer"></div>
+        </div>
+
+        <!-- Heart Tab -->
+        <div id="tab-heart" class="tab-content">
+            <div class="section-header">
+                <h2>❤️ Heart Health</h2>
+                <span class="section-badge">Cardiovascular Metrics</span>
             </div>
-            <div class="chart-card">
-                <div class="chart-header"><div><h3 class="chart-title">🧍 Stand Hours</h3><p class="chart-subtitle">Hourly movement throughout day</p></div></div>
-                <div class="chart-container"><canvas id="standHoursChart"></canvas></div>
+            <div class="charts-grid">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">💓 Heart Rate Trends</h3><p class="chart-subtitle">Resting HR and HRV over time</p></div>
+                    </div>
+                    <div class="chart-container tall"><canvas id="hrTrendsChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">❤️ HR Zone Distribution</h3><p class="chart-subtitle">Time spent in each zone</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="hrDistributionChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📊 Monthly HR Trend</h3><p class="chart-subtitle">Resting HR by month</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="monthlyHRChart"></canvas></div>
+                </div>
             </div>
-        </section>
-        <section class="insights-section">
-            <div class="insights-header"><h2>💡 Insights</h2></div>
-            <div class="insights-grid" id="insightsGrid"></div>
-        </section>
+            <div class="section-header" style="margin-top: 32px;">
+                <h2>⚡ Notable Days</h2>
+            </div>
+            <div class="charts-grid">
+                <div class="anomaly-list" id="highIntensityDays">
+                    <h4>🏋️ High Intensity Workouts</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Loading...</p>
+                </div>
+                <div class="anomaly-list" id="lowHRVDays">
+                    <h4>⚠️ Low Recovery Days</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Records Tab -->
+        <div id="tab-records" class="tab-content">
+            <div class="section-header">
+                <h2>🏆 All-Time Personal Records</h2>
+                <span class="section-badge" id="recordsDays">175 Days</span>
+            </div>
+            <div class="records-grid" id="recordsGrid"></div>
+            <div class="section-header" style="margin-top: 32px;">
+                <h2>🔥 Streaks & Consistency</h2>
+            </div>
+            <div class="trend-cards" id="streaksCards"></div>
+        </div>
+
+        <!-- Insights Tab -->
+        <div id="tab-insights" class="tab-content">
+            <div class="section-header">
+                <h2>💡 Deep Insights</h2>
+                <span class="section-badge">AI Analysis</span>
+            </div>
+            <div class="insights-grid" id="deepInsightsGrid"></div>
+            <div class="section-header" style="margin-top: 32px;">
+                <h2>📊 Recent vs Previous Period</h2>
+                <span class="section-badge">Last 30 Days</span>
+            </div>
+            <div class="trend-cards" id="comparisonCards"></div>
+        </div>
+
         <footer>
             <p>Health Analytics Dashboard • Data synced from Apple Health</p>
-            <p>Built with ❤️ for better health tracking</p>
+            <p>Built with ❤️ for better health tracking • 175 days analyzed</p>
         </footer>
     </div>
+
     <script>
         const CONFIG = { dataPath: 'data/', retryDelay: 2000, maxRetries: 3 };
-        const STATE = { charts: {}, data: {}, isLoading: false };
+        const STATE = { charts: {}, data: {}, deepData: {}, isLoading: false, activeTab: 'overview' };
         Chart.defaults.color = '#8b8b9e';
         Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
         Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, sans-serif';
+
+        // Tab switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            STATE.activeTab = tabId;
+
+            // Render tab-specific content if data is loaded
+            if (Object.keys(STATE.data).length > 0) {
+                renderTabContent(tabId);
+            }
+        }
+
+        function renderTabContent(tabId) {
+            switch(tabId) {
+                case 'trends':
+                    renderMonthlyProgression();
+                    renderWeeklyPatterns();
+                    renderTrendComparison();
+                    break;
+                case 'fitness':
+                    renderVO2MaxChart();
+                    renderCorrelations();
+                    break;
+                case 'heart':
+                    renderMonthlyHRChart();
+                    renderAnomalies();
+                    break;
+                case 'records':
+                    renderAllRecords();
+                    renderStreaks();
+                    break;
+                case 'insights':
+                    renderDeepInsights();
+                    renderComparison();
+                    break;
+            }
+        }
 
         async function loadJSON(filename, retries) {
             retries = retries || CONFIG.maxRetries;
@@ -419,7 +754,7 @@
                     if (!response.ok) throw new Error('HTTP ' + response.status);
                     return await response.json();
                 } catch (error) {
-                    if (attempt < retries) await new Promise(function(r) { setTimeout(r, CONFIG.retryDelay * attempt); });
+                    if (attempt < retries) await new Promise(r => setTimeout(r, CONFIG.retryDelay * attempt));
                 }
             }
             return null;
@@ -427,10 +762,18 @@
 
         async function loadAllData() {
             var files = ['summary_stats.json', 'daily_trends.json', 'weekly_comparison.json', 'goals_progress.json', 'hr_distribution.json', 'metadata.json'];
-            var results = await Promise.allSettled(files.map(function(f) { return loadJSON(f); }));
+            var deepFiles = ['deep_analysis.json', 'deep_insights.json', 'monthly_progression.json', 'weekly_patterns.json', 'all_personal_records.json', 'correlations.json'];
+
+            var results = await Promise.allSettled(files.map(f => loadJSON(f)));
+            var deepResults = await Promise.allSettled(deepFiles.map(f => loadJSON(f)));
+
             var data = {};
-            results.forEach(function(r, i) { if (r.status === 'fulfilled' && r.value) data[files[i].replace('.json', '').replace(/_/g, '')] = r.value; });
-            return Object.keys(data).length ? data : null;
+            results.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) data[files[i].replace('.json', '').replace(/_/g, '')] = r.value; });
+
+            var deepData = {};
+            deepResults.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) deepData[deepFiles[i].replace('.json', '').replace(/_/g, '')] = r.value; });
+
+            return { data: Object.keys(data).length ? data : null, deepData };
         }
 
         function calculateHealthScore(stats) {
@@ -463,9 +806,17 @@
             var row1 = document.getElementById('quickStatsRow1');
             var row2 = document.getElementById('quickStatsRow2');
             if (!stats) { row1.textContent = 'Loading...'; return; }
-            var fmt = function(n) { return n.toLocaleString(); };
-            row1.innerHTML = '<div class="quick-stat animate-in"><div class="quick-stat-icon steps">🚶</div><div class="quick-stat-content"><div class="quick-stat-value">' + fmt(stats.averages.steps) + '</div><div class="quick-stat-label">Avg Steps</div></div></div><div class="quick-stat animate-in delay-1"><div class="quick-stat-icon distance">📏</div><div class="quick-stat-content"><div class="quick-stat-value">' + stats.averages.distance_km + '</div><div class="quick-stat-label">Avg km/day</div></div></div><div class="quick-stat animate-in delay-2"><div class="quick-stat-icon energy">🔥</div><div class="quick-stat-content"><div class="quick-stat-value">' + fmt(stats.averages.active_energy_kcal) + '</div><div class="quick-stat-label">Avg kcal</div></div></div>';
-            row2.innerHTML = '<div class="quick-stat animate-in delay-1"><div class="quick-stat-icon exercise">💪</div><div class="quick-stat-content"><div class="quick-stat-value">' + stats.averages.exercise_minutes + '</div><div class="quick-stat-label">Avg min</div></div></div><div class="quick-stat animate-in delay-2"><div class="quick-stat-icon hr">❤️</div><div class="quick-stat-content"><div class="quick-stat-value">' + stats.averages.resting_hr + '</div><div class="quick-stat-label">Resting HR</div></div></div><div class="quick-stat animate-in delay-3"><div class="quick-stat-icon stand">🧍</div><div class="quick-stat-content"><div class="quick-stat-value">' + stats.averages.stand_hours + '</div><div class="quick-stat-label">Stand Hrs</div></div></div>';
+            var fmt = n => n.toLocaleString();
+            row1.innerHTML = `
+                <div class="quick-stat animate-in"><div class="quick-stat-icon steps">🚶</div><div class="quick-stat-content"><div class="quick-stat-value">${fmt(stats.averages.steps)}</div><div class="quick-stat-label">Avg Steps</div></div></div>
+                <div class="quick-stat animate-in delay-1"><div class="quick-stat-icon distance">📏</div><div class="quick-stat-content"><div class="quick-stat-value">${stats.averages.distance_km}</div><div class="quick-stat-label">Avg km/day</div></div></div>
+                <div class="quick-stat animate-in delay-2"><div class="quick-stat-icon energy">🔥</div><div class="quick-stat-content"><div class="quick-stat-value">${fmt(stats.averages.active_energy_kcal)}</div><div class="quick-stat-label">Avg kcal</div></div></div>
+            `;
+            row2.innerHTML = `
+                <div class="quick-stat animate-in delay-1"><div class="quick-stat-icon exercise">💪</div><div class="quick-stat-content"><div class="quick-stat-value">${stats.averages.exercise_minutes}</div><div class="quick-stat-label">Avg min</div></div></div>
+                <div class="quick-stat animate-in delay-2"><div class="quick-stat-icon hr">❤️</div><div class="quick-stat-content"><div class="quick-stat-value">${stats.averages.resting_hr}</div><div class="quick-stat-label">Resting HR</div></div></div>
+                <div class="quick-stat animate-in delay-3"><div class="quick-stat-icon stand">🧍</div><div class="quick-stat-content"><div class="quick-stat-value">${stats.averages.stand_hours}</div><div class="quick-stat-label">Stand Hrs</div></div></div>
+            `;
         }
 
         function renderGoals(stats) {
@@ -477,12 +828,12 @@
                 { icon: '🧍', color: '#ec4899', title: 'Stand Hours', value: stats.averages.stand_hours, target: 12, unit: 'hours', achieved: stats.goals.stand_12h.achieved, total: stats.goals.stand_12h.total },
                 { icon: '💪', color: '#8b5cf6', title: 'Exercise', value: stats.averages.exercise_minutes, target: 30, unit: 'min', achieved: stats.goals.exercise_30m.achieved, total: stats.goals.exercise_30m.total }
             ];
-            grid.innerHTML = goals.map(function(g, i) {
+            grid.innerHTML = goals.map((g, i) => {
                 var prog = Math.min((g.value / g.target) * 100, 100);
                 var ach = g.value >= g.target;
-                return '<div class="goal-card ' + (ach ? 'achieved' : '') + ' animate-in delay-' + (i+1) + '"><div class="goal-header"><div class="goal-icon" style="background: linear-gradient(135deg, ' + g.color + ', ' + g.color + 'dd)">' + g.icon + '</div><span class="goal-badge ' + (ach ? 'success' : 'warning') + '">' + g.achieved + '/' + g.total + ' days</span></div><div class="goal-title">' + g.title + '</div><div class="goal-value">' + (g.value > 100 ? g.value.toLocaleString() : g.value) + '</div><div class="goal-target">Goal: ' + g.target.toLocaleString() + ' ' + g.unit + '</div><div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ' + prog + '%; background: ' + g.color + '"></div></div></div>';
+                return `<div class="goal-card ${ach ? 'achieved' : ''} animate-in delay-${i+1}"><div class="goal-header"><div class="goal-icon" style="background: linear-gradient(135deg, ${g.color}, ${g.color}dd)">${g.icon}</div><span class="goal-badge ${ach ? 'success' : 'warning'}">${g.achieved}/${g.total} days</span></div><div class="goal-title">${g.title}</div><div class="goal-value">${g.value > 100 ? g.value.toLocaleString() : g.value}</div><div class="goal-target">Goal: ${g.target.toLocaleString()} ${g.unit}</div><div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${prog}%; background: ${g.color}"></div></div></div>`;
             }).join('');
-            var total = goals.reduce(function(s, g) { return s + (g.achieved >= g.total ? 1 : 0); }, 0);
+            var total = goals.reduce((s, g) => s + (g.achieved >= g.total ? 1 : 0), 0);
             streakEl.textContent = total >= 2 ? '7+' : total >= 1 ? '3' : '0';
         }
 
@@ -494,12 +845,12 @@
                 insights.push({ type: 'positive', icon: '💪', title: 'Exercise Champion', text: 'Full week of 30+ minute workouts!' });
             }
             if (stats && stats.averages && stats.averages.resting_hr < 60) {
-                insights.push({ type: 'positive', icon: '❤️', title: 'Athletic Heart Rate', text: 'Resting HR of ' + stats.averages.resting_hr + ' bpm is excellent!' });
+                insights.push({ type: 'positive', icon: '❤️', title: 'Athletic Heart Rate', text: `Resting HR of ${stats.averages.resting_hr} bpm is excellent!` });
             }
             if (insights.length === 0) {
                 insights.push({ type: 'neutral', icon: '📊', title: 'Keep Tracking', text: 'Continue logging for personalized insights.' });
             }
-            grid.innerHTML = insights.slice(0, 4).map(function(ins, i) { return '<div class="insight-card animate-in delay-' + (i+1) + '"><div class="insight-icon ' + ins.type + '">' + ins.icon + '</div><div class="insight-content"><h4>' + ins.title + '</h4><p>' + ins.text + '</p></div></div>'; }).join('');
+            grid.innerHTML = insights.slice(0, 4).map((ins, i) => `<div class="insight-card animate-in delay-${i+1}"><div class="insight-icon ${ins.type}">${ins.icon}</div><div class="insight-content"><h4>${ins.title}</h4><p>${ins.text}</p></div></div>`).join('');
         }
 
         function renderDailyTrends(data, days) {
@@ -514,13 +865,13 @@
             STATE.charts.dailyTrends = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dates.map(function(d) { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }),
+                    labels: dates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
                     datasets: [
                         { label: 'Steps', data: steps, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, fill: true, yAxisID: 'y', borderWidth: 2, pointRadius: days > 14 ? 0 : 3 },
                         { label: 'Active Energy (kcal)', data: energy, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: true, yAxisID: 'y1', borderWidth: 2, pointRadius: days > 14 ? 0 : 3 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 20 } } }, scales: { x: { grid: { display: false } }, y: { position: 'left', title: { display: true, text: 'Steps' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: function(v) { return v >= 1000 ? (v/1000)+'k' : v; } } }, y1: { position: 'right', title: { display: true, text: 'Energy (kcal)' }, grid: { drawOnChartArea: false } } } }
+                options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 20 } } }, scales: { x: { grid: { display: false } }, y: { position: 'left', title: { display: true, text: 'Steps' }, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } }, y1: { position: 'right', title: { display: true, text: 'Energy (kcal)' }, grid: { drawOnChartArea: false } } } }
             });
         }
 
@@ -530,8 +881,8 @@
             if (STATE.charts.weeklyComparison) STATE.charts.weeklyComparison.destroy();
             STATE.charts.weeklyComparison = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: data.weeks.map(function(w) { return w.split('-')[1]; }), datasets: [{ label: 'Avg Steps', data: data.avg_steps, backgroundColor: data.avg_steps.map(function(v) { return v >= 10000 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(59, 130, 246, 0.8)'; }), borderRadius: 6 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: function(v) { return v >= 1000 ? (v/1000)+'k' : v; } } } } }
+                data: { labels: data.weeks.map(w => w.split('-')[1]), datasets: [{ label: 'Avg Steps', data: data.avg_steps, backgroundColor: data.avg_steps.map(v => v >= 10000 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(59, 130, 246, 0.8)'), borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } } } }
             });
         }
 
@@ -539,11 +890,11 @@
             if (!data) return;
             var ctx = document.getElementById('goalsProgressChart');
             if (STATE.charts.goalsProgress) STATE.charts.goalsProgress.destroy();
-            var labels = data.dates.map(function(d) { return new Date(d).toLocaleDateString('en-US', { weekday: 'short' }); });
+            var labels = data.dates.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short' }));
             STATE.charts.goalsProgress = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: labels, datasets: [ { label: '10K Steps', data: data.steps_goal, backgroundColor: '#3b82f6', borderRadius: 4 }, { label: '12 Stand Hrs', data: data.stand_goal, backgroundColor: '#10b981', borderRadius: 4 }, { label: '30min Exercise', data: data.exercise_goal, backgroundColor: '#f59e0b', borderRadius: 4 } ] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 15, font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, max: 1, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1, callback: function(v) { return v === 1 ? '✓' : '✗'; } } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 15, font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, max: 1, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { stepSize: 1, callback: v => v === 1 ? '✓' : '✗' } } } }
             });
         }
 
@@ -551,12 +902,12 @@
             if (!data || !data.resting_hr) return;
             var ctx = document.getElementById('hrTrendsChart');
             if (STATE.charts.hrTrends) STATE.charts.hrTrends.destroy();
-            var dates = data.dates.slice(-14);
-            var rhr = data.resting_hr.slice(-14);
-            var hrv = data.hrv.slice(-14);
+            var dates = data.dates.slice(-30);
+            var rhr = data.resting_hr.slice(-30);
+            var hrv = data.hrv.slice(-30);
             STATE.charts.hrTrends = new Chart(ctx, {
                 type: 'line',
-                data: { labels: dates.map(function(d) { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }), datasets: [ { label: 'Resting HR', data: rhr, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, yAxisID: 'y' }, { label: 'HRV (ms)', data: hrv, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.4, fill: true, yAxisID: 'y1' } ] },
+                data: { labels: dates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })), datasets: [ { label: 'Resting HR', data: rhr, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: true, yAxisID: 'y' }, { label: 'HRV (ms)', data: hrv, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', tension: 0.4, fill: true, yAxisID: 'y1' } ] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { usePointStyle: true } } }, scales: { x: { grid: { display: false } }, y: { position: 'left', title: { display: true, text: 'bpm' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y1: { position: 'right', title: { display: true, text: 'ms' }, grid: { drawOnChartArea: false } } } }
             });
         }
@@ -565,12 +916,12 @@
             if (!data) return;
             var ctx = document.getElementById('hrDistributionChart');
             if (STATE.charts.hrDistribution) STATE.charts.hrDistribution.destroy();
-            var hasData = data.values.some(function(v) { return v > 0; });
+            var hasData = data.values.some(v => v > 0);
             if (!hasData) { ctx.parentElement.innerHTML = '<div class="empty-chart"><div class="empty-chart-icon">💓</div><p>HR zone data not yet available</p></div>'; return; }
             var colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
             STATE.charts.hrDistribution = new Chart(ctx, {
                 type: 'doughnut',
-                data: { labels: data.labels.map(function(l) { return l.charAt(0).toUpperCase() + l.slice(1); }), datasets: [{ data: data.values, backgroundColor: colors, borderWidth: 2, borderColor: '#12121a', hoverOffset: 8 }] },
+                data: { labels: data.labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)), datasets: [{ data: data.values, backgroundColor: colors, borderWidth: 2, borderColor: '#12121a', hoverOffset: 8 }] },
                 options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right', labels: { padding: 15, usePointStyle: true, font: { size: 11 } } } } }
             });
         }
@@ -583,7 +934,7 @@
             var ex = data.exercise_minutes.slice(-14);
             STATE.charts.exercise = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: dates.map(function(d) { return new Date(d).toLocaleDateString('en-US', { weekday: 'short' }); }), datasets: [{ label: 'Exercise Minutes', data: ex, backgroundColor: ex.map(function(v) { return v >= 30 ? 'rgba(139, 92, 246, 0.8)' : 'rgba(139, 92, 246, 0.4)'; }), borderRadius: 4 }] },
+                data: { labels: dates.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short' })), datasets: [{ label: 'Exercise Minutes', data: ex, backgroundColor: ex.map(v => v >= 30 ? 'rgba(139, 92, 246, 0.8)' : 'rgba(139, 92, 246, 0.4)'), borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } } } }
             });
         }
@@ -596,9 +947,380 @@
             var stands = data.stand_hours.slice(-14);
             STATE.charts.standHours = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: dates.map(function(d) { return new Date(d).toLocaleDateString('en-US', { weekday: 'short' }); }), datasets: [{ label: 'Stand Hours', data: stands, backgroundColor: stands.map(function(v) { return v >= 12 ? 'rgba(236, 72, 153, 0.8)' : 'rgba(236, 72, 153, 0.4)'; }), borderRadius: 4 }] },
+                data: { labels: dates.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short' })), datasets: [{ label: 'Stand Hours', data: stands, backgroundColor: stands.map(v => v >= 12 ? 'rgba(236, 72, 153, 0.8)' : 'rgba(236, 72, 153, 0.4)'), borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, max: 24, grid: { color: 'rgba(255,255,255,0.05)' } } } }
             });
+        }
+
+        // Deep Analysis Renderers
+        function renderMonthlyProgression() {
+            var data = STATE.deepData.monthlyprogression;
+            if (!data) return;
+
+            var ctx = document.getElementById('monthlyProgressionChart');
+            if (STATE.charts.monthlyProgression) STATE.charts.monthlyProgression.destroy();
+
+            STATE.charts.monthlyProgression = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(m => m.month),
+                    datasets: [
+                        { label: 'Avg Steps', data: data.map(m => m.steps || 0), backgroundColor: 'rgba(59, 130, 246, 0.8)', borderRadius: 4, yAxisID: 'y' },
+                        { label: 'Exercise Min', data: data.map(m => m.exercise_min || 0), backgroundColor: 'rgba(139, 92, 246, 0.8)', borderRadius: 4, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { position: 'left', title: { display: true, text: 'Steps' }, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } },
+                        y1: { position: 'right', title: { display: true, text: 'Minutes' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        function renderWeeklyPatterns() {
+            var data = STATE.deepData.weeklypatterns;
+            if (!data) return;
+
+            var ctx = document.getElementById('weeklyPatternsChart');
+            if (STATE.charts.weeklyPatterns) STATE.charts.weeklyPatterns.destroy();
+
+            var days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            var steps = days.map(d => data[d]?.steps || 0);
+
+            STATE.charts.weeklyPatterns = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{ label: 'Avg Steps', data: steps, backgroundColor: steps.map(v => v >= 10000 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(59, 130, 246, 0.8)'), borderRadius: 6 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } } }
+                }
+            });
+        }
+
+        function renderTrendComparison() {
+            var data = STATE.deepData.monthlyprogression;
+            if (!data || data.length < 2) return;
+
+            var container = document.getElementById('trendCards');
+            var recent = data[data.length - 1];
+            var prev = data[data.length - 2];
+
+            var metrics = [
+                { key: 'steps', label: 'Avg Steps', icon: '🚶', format: v => Math.round(v).toLocaleString() },
+                { key: 'exercise_min', label: 'Exercise', icon: '💪', format: v => Math.round(v) + ' min' },
+                { key: 'resting_hr', label: 'Resting HR', icon: '❤️', format: v => Math.round(v) + ' bpm', lower: true },
+                { key: 'hrv_avg', label: 'HRV', icon: '💓', format: v => Math.round(v) + ' ms' },
+                { key: 'vo2_max', label: 'VO2 Max', icon: '🏃', format: v => v.toFixed(1) }
+            ];
+
+            container.innerHTML = metrics.map(m => {
+                var curr = recent[m.key] || 0;
+                var pre = prev[m.key] || 0;
+                var change = pre > 0 ? ((curr - pre) / pre * 100).toFixed(1) : 0;
+                var isUp = change > 0;
+                var isGood = m.lower ? !isUp : isUp;
+                return `
+                    <div class="trend-card animate-in">
+                        <div class="trend-header">
+                            <span class="trend-metric">${m.icon} ${m.label}</span>
+                            <span class="trend-change ${isGood ? 'up' : change < 0 ? 'down' : 'neutral'}">${isUp ? '+' : ''}${change}%</span>
+                        </div>
+                        <div class="trend-values">
+                            <span class="trend-current">${m.format(curr)}</span>
+                            <span class="trend-previous">from ${m.format(pre)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderVO2MaxChart() {
+            var data = STATE.deepData.monthlyprogression;
+            if (!data) return;
+
+            var ctx = document.getElementById('vo2MaxChart');
+            if (STATE.charts.vo2Max) STATE.charts.vo2Max.destroy();
+
+            var vo2Data = data.filter(m => m.vo2_max > 0);
+
+            STATE.charts.vo2Max = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: vo2Data.map(m => m.month),
+                    datasets: [{
+                        label: 'VO2 Max',
+                        data: vo2Data.map(m => m.vo2_max),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { title: { display: true, text: 'ml/kg/min' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function renderCorrelations() {
+            var data = STATE.deepData.correlations;
+            if (!data) return;
+
+            var container = document.getElementById('correlationsContainer');
+            var html = '';
+
+            if (data.steps_to_hrv) {
+                var s = data.steps_to_hrv;
+                var max = Math.max(s.low_steps_hrv, s.medium_steps_hrv, s.high_steps_hrv);
+                html += `
+                    <div class="correlation-card animate-in">
+                        <h4>👣 Steps → Next-Day Recovery (HRV)</h4>
+                        <p>Your data shows how activity levels affect next-day recovery.</p>
+                        <div class="correlation-bars">
+                            <div class="correlation-bar">
+                                <span class="bar-label">Low Steps</span>
+                                <div class="bar-track"><div class="bar-fill blue" style="width: ${s.low_steps_hrv/max*100}%">${s.low_steps_hrv.toFixed(0)} ms</div></div>
+                            </div>
+                            <div class="correlation-bar">
+                                <span class="bar-label">Medium Steps</span>
+                                <div class="bar-track"><div class="bar-fill purple" style="width: ${s.medium_steps_hrv/max*100}%">${s.medium_steps_hrv.toFixed(0)} ms</div></div>
+                            </div>
+                            <div class="correlation-bar">
+                                <span class="bar-label">High Steps</span>
+                                <div class="bar-track"><div class="bar-fill green" style="width: ${s.high_steps_hrv/max*100}%">${s.high_steps_hrv.toFixed(0)} ms</div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (data.exercise_to_rhr) {
+                var e = data.exercise_to_rhr;
+                html += `
+                    <div class="correlation-card animate-in delay-1">
+                        <h4>💪 Exercise → Next-Day Resting HR</h4>
+                        <p>Exercise threshold: ${Math.round(e.high_exercise_threshold)} minutes</p>
+                        <div class="correlation-bars">
+                            <div class="correlation-bar">
+                                <span class="bar-label">Light Exercise</span>
+                                <div class="bar-track"><div class="bar-fill blue" style="width: ${e.low_exercise_next_rhr/70*100}%">${e.low_exercise_next_rhr.toFixed(1)} bpm</div></div>
+                            </div>
+                            <div class="correlation-bar">
+                                <span class="bar-label">Heavy Exercise</span>
+                                <div class="bar-track"><div class="bar-fill green" style="width: ${e.high_exercise_next_rhr/70*100}%">${e.high_exercise_next_rhr.toFixed(1)} bpm</div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html || '<p style="color: var(--text-secondary)">Not enough data for correlation analysis yet.</p>';
+        }
+
+        function renderMonthlyHRChart() {
+            var data = STATE.deepData.monthlyprogression;
+            if (!data) return;
+
+            var ctx = document.getElementById('monthlyHRChart');
+            if (STATE.charts.monthlyHR) STATE.charts.monthlyHR.destroy();
+
+            var hrData = data.filter(m => m.resting_hr > 0);
+
+            STATE.charts.monthlyHR = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: hrData.map(m => m.month),
+                    datasets: [{
+                        label: 'Resting HR',
+                        data: hrData.map(m => m.resting_hr),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false } }, y: { title: { display: true, text: 'bpm' } } }
+                }
+            });
+        }
+
+        function renderAnomalies() {
+            var data = STATE.deepData.deepanalysis;
+            if (!data || !data.anomalies) return;
+
+            var highIntensity = document.getElementById('highIntensityDays');
+            var lowHRV = document.getElementById('lowHRVDays');
+
+            if (data.anomalies.high_intensity_days && data.anomalies.high_intensity_days.length > 0) {
+                highIntensity.innerHTML = `
+                    <h4>🏋️ High Intensity Workouts</h4>
+                    ${data.anomalies.high_intensity_days.slice(0, 5).map(d => `
+                        <div class="anomaly-item">
+                            <span class="anomaly-icon">💪</span>
+                            <div class="anomaly-content">
+                                <div class="anomaly-date">${d[0]}</div>
+                                <div class="anomaly-value">Max HR: ${Math.round(d[1])} bpm</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+
+            if (data.anomalies.low_hrv_days && data.anomalies.low_hrv_days.length > 0) {
+                var avgHRV = data.anomalies.hrv_avg || 40;
+                lowHRV.innerHTML = `
+                    <h4>⚠️ Low Recovery Days</h4>
+                    ${data.anomalies.low_hrv_days.slice(0, 5).map(d => `
+                        <div class="anomaly-item">
+                            <span class="anomaly-icon">😴</span>
+                            <div class="anomaly-content">
+                                <div class="anomaly-date">${d[0]}</div>
+                                <div class="anomaly-value">HRV: ${Math.round(d[1])} ms (avg: ${Math.round(avgHRV)})</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+        }
+
+        function renderAllRecords() {
+            var data = STATE.deepData.allpersonalrecords;
+            var analysis = STATE.deepData.deepanalysis;
+            if (!data) return;
+
+            var container = document.getElementById('recordsGrid');
+
+            var records = [
+                { key: 'max_steps', label: 'Max Steps', icon: '🚶', color: 'var(--gradient-blue)', format: v => Math.round(v).toLocaleString() },
+                { key: 'max_distance', label: 'Max Distance', icon: '📏', color: 'var(--gradient-green)', format: v => v.toFixed(2) + ' km' },
+                { key: 'max_exercise', label: 'Max Exercise', icon: '💪', color: 'var(--gradient-purple)', format: v => Math.round(v) + ' min' },
+                { key: 'max_flights', label: 'Max Flights', icon: '🏔️', color: 'var(--gradient-orange)', format: v => Math.round(v) },
+                { key: 'lowest_resting_hr', label: 'Lowest RHR', icon: '❤️', color: 'linear-gradient(135deg, #ef4444, #dc2626)', format: v => Math.round(v) + ' bpm' },
+                { key: 'highest_hrv', label: 'Highest HRV', icon: '💓', color: 'var(--gradient-pink)', format: v => Math.round(v) + ' ms' },
+                { key: 'max_swim_distance', label: 'Max Swim', icon: '🏊', color: 'var(--gradient-cyan)', format: v => Math.round(v) + 'm' }
+            ];
+
+            container.innerHTML = records.filter(r => data[r.key]).map((r, i) => {
+                var rec = data[r.key];
+                return `
+                    <div class="record-card animate-in delay-${i % 3 + 1}">
+                        <div class="record-icon" style="background: ${r.color}">${r.icon}</div>
+                        <div class="record-value">${r.format(rec.value)}</div>
+                        <div class="record-label">${r.label}</div>
+                        <div class="record-date">📅 ${rec.date}</div>
+                    </div>
+                `;
+            }).join('');
+
+            if (analysis && analysis.overview) {
+                document.getElementById('recordsDays').textContent = analysis.overview.total_days + ' Days';
+            }
+        }
+
+        function renderStreaks() {
+            var data = STATE.deepData.deepanalysis;
+            if (!data || !data.streaks) return;
+
+            var container = document.getElementById('streaksCards');
+            var s = data.streaks;
+
+            container.innerHTML = `
+                <div class="trend-card animate-in">
+                    <div class="trend-header">
+                        <span class="trend-metric">🔥 Longest 10K Streak</span>
+                    </div>
+                    <div class="trend-values">
+                        <span class="trend-current">${s.longest_step_streak} days</span>
+                        <span class="trend-previous">ended ${s.longest_streak_end}</span>
+                    </div>
+                </div>
+                <div class="trend-card animate-in delay-1">
+                    <div class="trend-header">
+                        <span class="trend-metric">🎯 Current Streak</span>
+                    </div>
+                    <div class="trend-values">
+                        <span class="trend-current">${s.current_streak} days</span>
+                    </div>
+                </div>
+                <div class="trend-card animate-in delay-2">
+                    <div class="trend-header">
+                        <span class="trend-metric">💪 Exercise Consistency</span>
+                    </div>
+                    <div class="trend-values">
+                        <span class="trend-current">${Math.round(s.exercise_consistency * 100)}%</span>
+                        <span class="trend-previous">${s.exercise_days}/${s.total_days} days</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDeepInsights() {
+            var data = STATE.deepData.deepinsights;
+            if (!data) return;
+
+            var container = document.getElementById('deepInsightsGrid');
+            container.innerHTML = data.map((ins, i) => `
+                <div class="insight-card animate-in delay-${i % 3 + 1}">
+                    <div class="insight-icon ${ins.type}">${ins.icon}</div>
+                    <div class="insight-content">
+                        <h4>${ins.title}</h4>
+                        <p>${ins.text}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderComparison() {
+            var data = STATE.deepData.deepanalysis;
+            if (!data || !data.recent_vs_previous) return;
+
+            var container = document.getElementById('comparisonCards');
+            var comp = data.recent_vs_previous;
+
+            var metrics = [
+                { key: 'steps', label: 'Daily Steps', icon: '🚶' },
+                { key: 'exercise_min', label: 'Exercise', icon: '💪' },
+                { key: 'resting_hr', label: 'Resting HR', icon: '❤️', lower: true },
+                { key: 'hrv_avg', label: 'HRV', icon: '💓' }
+            ];
+
+            container.innerHTML = metrics.filter(m => comp[m.key]).map((m, i) => {
+                var c = comp[m.key];
+                var isUp = c.pct_change > 0;
+                var isGood = m.lower ? !isUp : isUp;
+                return `
+                    <div class="trend-card animate-in delay-${i % 3 + 1}">
+                        <div class="trend-header">
+                            <span class="trend-metric">${m.icon} ${m.label}</span>
+                            <span class="trend-change ${isGood ? 'up' : c.pct_change < 0 ? 'down' : 'neutral'}">${isUp ? '+' : ''}${c.pct_change.toFixed(1)}%</span>
+                        </div>
+                        <div class="trend-values">
+                            <span class="trend-current">${typeof c.recent_avg === 'number' ? (c.recent_avg > 100 ? Math.round(c.recent_avg).toLocaleString() : c.recent_avg.toFixed(1)) : c.recent_avg}</span>
+                            <span class="trend-previous">from ${typeof c.previous_avg === 'number' ? (c.previous_avg > 100 ? Math.round(c.previous_avg).toLocaleString() : c.previous_avg.toFixed(1)) : c.previous_avg}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         async function initDashboard() {
@@ -606,21 +1328,29 @@
             document.getElementById('refreshBtn').disabled = true;
             document.getElementById('refreshBtn').classList.add('loading');
             try {
-                var allData = await loadAllData();
-                if (!allData) { document.querySelector('.container').insertAdjacentHTML('afterbegin', '<div class="error-state"><h4>Dashboard Error</h4><p>Failed to load data. Try refreshing.</p><button onclick="refreshDashboard()">Try Again</button></div>'); return; }
-                STATE.data = allData;
-                if (allData.metadata) document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date(allData.metadata.generated_at).toLocaleString();
-                renderHealthScore(allData.summarystats);
-                renderQuickStats(allData.summarystats);
-                renderGoals(allData.summarystats);
-                renderInsights(allData);
-                renderDailyTrends(allData.dailytrends);
-                renderWeeklyComparison(allData.weeklycomparison);
-                renderGoalsProgress(allData.goalsprogress);
-                renderHRTrends(allData.dailytrends);
-                renderHRDistribution(allData.hrdistribution);
-                renderExerciseChart(allData.dailytrends);
-                renderStandHoursChart(allData.dailytrends);
+                var result = await loadAllData();
+                if (!result.data) {
+                    document.querySelector('.container').insertAdjacentHTML('afterbegin', '<div class="error-state"><h4>Dashboard Error</h4><p>Failed to load data. Try refreshing.</p><button onclick="refreshDashboard()">Try Again</button></div>');
+                    return;
+                }
+                STATE.data = result.data;
+                STATE.deepData = result.deepData;
+
+                if (result.data.metadata) document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date(result.data.metadata.generated_at).toLocaleString();
+
+                // Render overview tab
+                renderHealthScore(result.data.summarystats);
+                renderQuickStats(result.data.summarystats);
+                renderGoals(result.data.summarystats);
+                renderInsights(result.data);
+                renderDailyTrends(result.data.dailytrends);
+                renderWeeklyComparison(result.data.weeklycomparison);
+                renderGoalsProgress(result.data.goalsprogress);
+                renderHRTrends(result.data.dailytrends);
+                renderHRDistribution(result.data.hrdistribution);
+                renderExerciseChart(result.data.dailytrends);
+                renderStandHoursChart(result.data.dailytrends);
+
             } finally {
                 STATE.isLoading = false;
                 document.getElementById('refreshBtn').disabled = false;
@@ -629,12 +1359,12 @@
         }
 
         async function refreshDashboard() {
-            document.querySelectorAll('.error-state').forEach(function(el) { el.remove(); });
+            document.querySelectorAll('.error-state').forEach(el => el.remove());
             await initDashboard();
         }
 
         function setTrendsPeriod(days) {
-            document.querySelectorAll('.chart-actions .chart-action-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            document.querySelectorAll('.chart-actions .chart-action-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             renderDailyTrends(STATE.data.dailytrends, days);
         }
