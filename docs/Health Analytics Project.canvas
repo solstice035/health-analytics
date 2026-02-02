@@ -1,0 +1,31 @@
+{
+	"nodes":[
+		{"id":"main","type":"file","file":"1-Projects/0-Dev/HealthAnalytics/Health Analytics Dashboard.md","x":-220,"y":-160,"width":440,"height":320,"color":"5"},
+		{"id":"data-source","type":"text","text":"## Data Source\n\n**Apple Health**\n- iOS Health app\n- 25+ metrics tracked\n- Continuous monitoring\n\n↓\n\n**Health Auto Export**\n- Daily automation\n- JSON format\n- iCloud sync","x":-800,"y":-160,"width":300,"height":320,"color":"1"},
+		{"id":"icloud","type":"text","text":"## iCloud Drive\n\n**Automatic Sync**\n- 175 days of data\n- ~516 MB total\n- Daily updates\n\n**Location:**\n`~/Library/Mobile Documents/...`","x":-800,"y":240,"width":300,"height":280,"color":"1"},
+		{"id":"scripts","type":"file","file":"1-Projects/0-Dev/HealthAnalytics/Health Analytics - Analysis Scripts.md","x":-220,"y":240,"width":440,"height":280,"color":"4"},
+		{"id":"technical","type":"file","file":"1-Projects/0-Dev/HealthAnalytics/Health Analytics - Technical Details.md","x":320,"y":-160,"width":380,"height":320,"color":"3"},
+		{"id":"deployment","type":"file","file":"1-Projects/0-Dev/HealthAnalytics/Health Analytics - Deployment Guide.md","x":320,"y":240,"width":380,"height":280,"color":"2"},
+		{"id":"dashboard","type":"text","text":"## Interactive Dashboard\n\n**Features:**\n- 30-day activity trends\n- Weekly comparisons\n- Goal tracking\n- Real-time stats\n\n**Tech:**\n- HTML/CSS/JS\n- Chart.js\n- Responsive design","x":-220,"y":600,"width":440,"height":300,"color":"5"},
+		{"id":"analysis","type":"text","text":"## Analysis Tools\n\n**7 Python Scripts:**\n\n1. icloud_helper.py\n2. daily_health_check.py\n3. detailed_analysis.py\n4. weekly_summary.py\n5. generate_dashboard_data.py\n6. explore_data.py\n7. analyze_specific_date.py","x":-800,"y":600,"width":300,"height":300,"color":"4"},
+		{"id":"insights","type":"text","text":"## Current Insights\n\n**Jan 19-25, 2026:**\n\n- 🚶 11,762 steps/day\n- 📏 9.9 km/day\n- 🔥 886 kcal/day\n- 💪 82 min exercise/day\n- ❤️ 57 bpm resting HR\n- 📊 43 ms HRV\n\n**Goals:**\n- 5/7 days hit 10K steps\n- 7/7 days hit 30min exercise","x":320,"y":600,"width":380,"height":300,"color":"6"},
+		{"id":"deployment-options","type":"text","text":"## Deployment Options\n\n1. **Self-Hosted VPS**\n   - nginx + SSL\n   - Full control\n   - Automated sync\n\n2. **Netlify**\n   - Quick setup\n   - Auto SSL\n   - GitHub integration\n\n3. **GitHub Pages**\n   - Free hosting\n   - Version control","x":800,"y":240,"width":340,"height":280,"color":"2"},
+		{"id":"metrics","type":"text","text":"## Available Metrics\n\n**Activity (9):**\nSteps, distance, energy, exercise, stands, flights, daylight, speed, asymmetry\n\n**Heart (6):**\nHR, resting HR, walking HR, HRV, VO2 max, recovery\n\n**Other (10+):**\nBlood oxygen, audio exposure, physical effort, basal energy","x":-800,"y":-520,"width":300,"height":280,"color":"1"},
+		{"id":"next-steps","type":"text","text":"## Next Steps\n\n**Immediate:**\n- [ ] Deploy to domain\n- [ ] Automated updates\n\n**Short Term:**\n- [ ] Clawdbot integration\n- [ ] Monthly trends\n- [ ] Sleep analysis\n\n**Long Term:**\n- [ ] ML predictions\n- [ ] Anomaly detection\n- [ ] Multi-device sync","x":800,"y":-160,"width":340,"height":320,"color":"6"},
+		{"id":"security","type":"text","text":"## Privacy & Security\n\n**Data Privacy:**\n- Local processing only\n- No external APIs\n- iCloud encryption\n\n**Deployment Security:**\n- HTTPS required\n- Basic auth option\n- IP whitelist\n- VPN access","x":800,"y":600,"width":340,"height":300,"color":"2"}
+	],
+	"edges":[
+		{"id":"data-to-icloud","fromNode":"data-source","fromSide":"bottom","toNode":"icloud","toSide":"top","color":"1"},
+		{"id":"icloud-to-main","fromNode":"icloud","fromSide":"right","toNode":"main","toSide":"left","color":"1"},
+		{"id":"main-to-scripts","fromNode":"main","fromSide":"bottom","toNode":"scripts","toSide":"top","color":"4"},
+		{"id":"main-to-technical","fromNode":"main","fromSide":"right","toNode":"technical","toSide":"left","color":"3"},
+		{"id":"main-to-deployment","fromNode":"main","fromSide":"right","toNode":"deployment","toSide":"top","color":"2"},
+		{"id":"scripts-to-dashboard","fromNode":"scripts","fromSide":"bottom","toNode":"dashboard","toSide":"top","color":"5"},
+		{"id":"scripts-to-analysis","fromNode":"analysis","fromSide":"right","toNode":"scripts","toSide":"left","color":"4"},
+		{"id":"dashboard-to-insights","fromNode":"dashboard","fromSide":"right","toNode":"insights","toSide":"left","color":"6"},
+		{"id":"deployment-to-options","fromNode":"deployment","fromSide":"right","toNode":"deployment-options","toSide":"left","color":"2"},
+		{"id":"deployment-to-security","fromNode":"deployment","fromSide":"bottom","toNode":"security","toSide":"top","color":"2"},
+		{"id":"main-to-next","fromNode":"main","fromSide":"top","toNode":"next-steps","toSide":"bottom","color":"6"},
+		{"id":"data-to-metrics","fromNode":"metrics","fromSide":"bottom","toNode":"data-source","toSide":"top","color":"1"}
+	]
+}
