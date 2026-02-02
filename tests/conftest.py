@@ -177,11 +177,25 @@ def expected_hr_stats():
     }
 
 
+# Hevy workout fixtures
+@pytest.fixture
+def sample_hevy_data(fixtures_dir) -> Dict[str, Any]:
+    """Load sample Hevy workout data from fixture file."""
+    with open(fixtures_dir / "sample_hevy_data.json") as f:
+        return json.load(f)
+
+
+@pytest.fixture
+def empty_hevy_data() -> Dict[str, Any]:
+    """Return Hevy data structure with no workouts."""
+    return {"workouts": []}
+
+
 # Auto-use fixtures
 @pytest.fixture(autouse=True)
 def reset_environment(monkeypatch):
     """Reset environment variables before each test."""
     # Remove any health analytics env vars
     for key in list(monkeypatch._setitem):
-        if key.startswith('HEALTH_'):
+        if key.startswith('HEALTH_') or key.startswith('HEVY_'):
             monkeypatch.delenv(key, raising=False)

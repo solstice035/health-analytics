@@ -11,12 +11,21 @@ Usage:
     health explore            Explore data structure
     health config             Show configuration
     health status             Show system status
+    health hevy <action>      Manage Hevy workout data
+
+Hevy Commands:
+    health hevy status        Show Hevy integration status
+    health hevy sync          Sync workouts from Hevy API
+    health hevy stats         Show workout statistics
+    health hevy prs           Show personal records
+    health hevy generate      Generate workout dashboard data
 
 Examples:
     health dashboard --port 3000
     health generate --days 60
     health analyze 2026-01-25
-    health daily --notify
+    health hevy sync --force
+    health hevy prs --exercise bench
 """
 
 import sys
@@ -82,9 +91,15 @@ def cmd_config(args):
     print()
     print("Validation:")
     for name, info in config.validate().items():
-        status = "\033[92m✓\033[0m" if info['exists'] else "\033[91m✗\033[0m"
-        extra = " (symlink)" if info.get('is_symlink') else ""
-        print(f"  {status} {name}: {info['path']}{extra}")
+        if name == 'hevy':
+            # Special handling for Hevy config
+            status = "\033[92m✓\033[0m" if info['configured'] else "\033[91m✗\033[0m"
+            api_status = "set" if info['api_token_set'] else "missing"
+            print(f"  {status} hevy: api_token={api_status}")
+        else:
+            status = "\033[92m✓\033[0m" if info['exists'] else "\033[91m✗\033[0m"
+            extra = " (symlink)" if info.get('is_symlink') else ""
+            print(f"  {status} {name}: {info['path']}{extra}")
 
 
 def cmd_cache(args):
@@ -194,6 +209,25 @@ def cmd_status(args):
     else:
         print(f"  \033[91mDashboard path does not exist\033[0m")
 
+    # Hevy status
+    print("\n\033[94mHevy Integration\033[0m")
+    if config.hevy_configured:
+        print(f"  Status:       \033[92m✓\033[0m Configured")
+
+        # Check for workout data
+        workout_file = dashboard_path / "workout_trends.json"
+        if workout_file.exists():
+            age = datetime.now() - datetime.fromtimestamp(workout_file.stat().st_mtime)
+            age_str = f"{int(age.total_seconds() / 3600)}h {int((age.total_seconds() % 3600) / 60)}m ago"
+            print(f"  Workout data: \033[92m✓\033[0m {age_str}")
+        else:
+            print(f"  Workout data: \033[93m○\033[0m Not generated")
+            print(f"  Run: health hevy generate")
+    else:
+        print(f"  Status:       \033[93m○\033[0m Not configured")
+        if not config.hevy_api_token:
+            print(f"  Missing:      HEVY_API in .env")
+
     print()
 
 
@@ -201,6 +235,125 @@ def cmd_deep(args):
     """Run deep analysis."""
     from deep_analysis import main as deep_main
     deep_main()
+
+
+def cmd_hevy(args):
+    """Handle Hevy workout commands."""
+    from hevy_helper import fetch_and_cache_workouts, get_hevy_status, HevyAPIError
+    from hevy_analysis import extract_workout_metrics, get_workout_records, get_muscle_group_stats
+
+    if args.hevy_action == 'status':
+        print("\033[1mHevy Integration Status\033[0m")
+        print("=" * 40)
+        status = get_hevy_status()
+
+        api_icon = "\033[92m✓\033[0m" if status['api_token_set'] else "\033[91m✗\033[0m"
+
+        print(f"  {api_icon} API token:  {'Set' if status['api_token_set'] else 'Not set'}")
+        print(f"  Connection: {status['connection']}")
+
+        if status['workout_count'] > 0:
+            print(f"  Workouts:   {status['workout_count']} cached")
+
+    elif args.hevy_action == 'sync':
+        print("🔄 Syncing workouts from Hevy...")
+        try:
+            data = fetch_and_cache_workouts(force_refresh=args.force)
+            if data:
+                workouts = extract_workout_metrics(data)
+                print(f"\033[92m✓\033[0m Synced {len(workouts)} workouts")
+
+                if workouts:
+                    latest = workouts[0]
+                    print(f"  Latest: {latest['date']} - {latest['name']}")
+            else:
+                print("\033[91m✗\033[0m No data returned")
+        except HevyAPIError as e:
+            print(f"\033[91m✗\033[0m Error: {e}")
+            return 1
+
+    elif args.hevy_action == 'stats':
+        print("\033[1mWorkout Statistics\033[0m")
+        print("=" * 40)
+
+        try:
+            data = fetch_and_cache_workouts()
+            if not data:
+                print("No workout data. Run: health hevy sync")
+                return 1
+
+            workouts = extract_workout_metrics(data)
+            stats = get_muscle_group_stats(workouts, days=args.days)
+
+            print(f"\n\033[94mLast {args.days} Days\033[0m")
+            print(f"  Workouts:  {stats['workout_count']}")
+
+            total_volume = sum(stats['volume_distribution'].values())
+            print(f"  Volume:    {total_volume:,.0f} kg")
+
+            if stats['volume_distribution']:
+                print(f"\n\033[94mMuscle Group Volume\033[0m")
+                sorted_groups = sorted(
+                    stats['volume_distribution'].items(),
+                    key=lambda x: x[1],
+                    reverse=True
+                )
+                for group, volume in sorted_groups[:5]:
+                    pct = stats['volume_percentages'].get(group, 0)
+                    bar = "█" * int(pct / 5)
+                    print(f"  {group.title():12} {volume:8,.0f} kg  {pct:5.1f}%  {bar}")
+
+        except HevyAPIError as e:
+            print(f"\033[91m✗\033[0m Error: {e}")
+            return 1
+
+    elif args.hevy_action == 'prs':
+        print("\033[1mPersonal Records\033[0m")
+        print("=" * 40)
+
+        try:
+            data = fetch_and_cache_workouts()
+            if not data:
+                print("No workout data. Run: health hevy sync")
+                return 1
+
+            workouts = extract_workout_metrics(data)
+            records = get_workout_records(workouts)
+
+            # Filter by exercise name if specified
+            if args.exercise:
+                search = args.exercise.lower()
+                records = {k: v for k, v in records.items() if search in k.lower()}
+
+            if not records:
+                print("No records found")
+                return 1
+
+            # Sort by max weight
+            sorted_records = sorted(
+                records.items(),
+                key=lambda x: x[1]['max_weight_kg'],
+                reverse=True
+            )[:args.limit]
+
+            print(f"\n{'Exercise':30} {'Max':>8} {'Date':>12} {'Sessions':>8}")
+            print("-" * 60)
+
+            for name, record in sorted_records:
+                weight = f"{record['max_weight_kg']:.1f}kg"
+                date = record['max_weight_date'] or '-'
+                sessions = record['total_sessions']
+                print(f"{name:30} {weight:>8} {date:>12} {sessions:>8}")
+
+        except HevyAPIError as e:
+            print(f"\033[91m✗\033[0m Error: {e}")
+            return 1
+
+    elif args.hevy_action == 'generate':
+        from generate_workout_data import main as generate_workout_main
+        return generate_workout_main()
+
+    return 0
 
 
 def main():
@@ -257,6 +410,24 @@ Examples:
     cache_parser.add_argument('action', choices=['stats', 'clear', 'warm'],
                               help='Action: stats (show), clear (delete all), warm (pre-load)')
 
+    # hevy command with subcommands
+    hevy_parser = subparsers.add_parser('hevy', help='Manage Hevy workout data')
+    hevy_subparsers = hevy_parser.add_subparsers(dest='hevy_action', help='Hevy actions')
+
+    hevy_status_parser = hevy_subparsers.add_parser('status', help='Show Hevy integration status')
+
+    hevy_sync_parser = hevy_subparsers.add_parser('sync', help='Sync workout data from Hevy')
+    hevy_sync_parser.add_argument('--force', action='store_true', help='Force refresh (bypass cache)')
+
+    hevy_stats_parser = hevy_subparsers.add_parser('stats', help='Show workout statistics')
+    hevy_stats_parser.add_argument('--days', type=int, default=7, help='Days to analyze (default: 7)')
+
+    hevy_prs_parser = hevy_subparsers.add_parser('prs', help='Show personal records')
+    hevy_prs_parser.add_argument('--exercise', type=str, help='Filter by exercise name')
+    hevy_prs_parser.add_argument('--limit', type=int, default=15, help='Number of records to show')
+
+    hevy_generate_parser = hevy_subparsers.add_parser('generate', help='Generate workout dashboard data')
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -274,7 +445,13 @@ Examples:
         'config': cmd_config,
         'status': cmd_status,
         'cache': cmd_cache,
+        'hevy': cmd_hevy,
     }
+
+    # Handle hevy without subcommand
+    if args.command == 'hevy' and args.hevy_action is None:
+        hevy_parser.print_help()
+        return 1
 
     if args.command in commands:
         try:

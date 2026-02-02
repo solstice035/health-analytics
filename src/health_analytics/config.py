@@ -19,6 +19,7 @@ Usage:
 """
 
 import os
+import json
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
@@ -118,6 +119,64 @@ class Config:
         # Default: project_root/.cache
         return self.project_root / '.cache'
 
+    @property
+    def hevy_api_token(self) -> Optional[str]:
+        """Hevy API authentication token from HEVY_API env var."""
+        return os.environ.get('HEVY_API')
+
+    @property
+    def hevy_username(self) -> Optional[str]:
+        """Hevy username from HEVY_USERNAME env var."""
+        return os.environ.get('HEVY_USERNAME')
+
+    @property
+    def hevy_configured(self) -> bool:
+        """Check if Hevy integration is fully configured (only needs API token)."""
+        return bool(self.hevy_api_token)
+
+    @property
+    def user_profile_path(self) -> Path:
+        """Path to user profile JSON file."""
+        return self.project_root / 'user_profile.json'
+
+    def load_user_profile(self) -> dict:
+        """Load user profile from JSON file. Returns empty dict if not found."""
+        if not self.user_profile_path.exists():
+            return {}
+        try:
+            with open(self.user_profile_path) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {}
+
+    @property
+    def user_age(self) -> Optional[int]:
+        """User's age from profile, if configured."""
+        profile = self.load_user_profile()
+        age = profile.get('age')
+        return int(age) if age is not None else None
+
+    @property
+    def hrmax(self) -> Optional[int]:
+        """
+        User's max heart rate.
+        Uses hrmax_override if set, otherwise calculates from age (220 - age).
+        Returns None if neither is configured.
+        """
+        profile = self.load_user_profile()
+        override = profile.get('hrmax_override')
+        if override is not None:
+            return int(override)
+        age = profile.get('age')
+        if age is not None:
+            return 220 - int(age)
+        return None
+
+    @property
+    def hr_zones_configured(self) -> bool:
+        """Check if HR zones can be calculated (age or hrmax_override set)."""
+        return self.hrmax is not None
+
     def ensure_directories(self) -> None:
         """Create required directories if they don't exist."""
         self.dashboard_data_path.mkdir(parents=True, exist_ok=True)
@@ -155,11 +214,24 @@ class Config:
             'cache_dir': {
                 'path': str(self.cache_dir),
                 'exists': self.cache_dir.exists()
+            },
+            'hevy': {
+                'configured': self.hevy_configured,
+                'api_token_set': bool(self.hevy_api_token)
+            },
+            'user_profile': {
+                'path': str(self.user_profile_path),
+                'exists': self.user_profile_path.exists(),
+                'age': self.user_age,
+                'hrmax': self.hrmax,
+                'hr_zones_configured': self.hr_zones_configured
             }
         }
 
     def __str__(self) -> str:
         """String representation showing all paths."""
+        hevy_status = "configured" if self.hevy_configured else "not configured"
+        hr_status = f"HRmax={self.hrmax}" if self.hr_zones_configured else "not configured"
         return (
             f"Health Analytics Configuration:\n"
             f"  Project Root:      {self.project_root}\n"
@@ -167,7 +239,9 @@ class Config:
             f"  Dashboard Data:    {self.dashboard_data_path}\n"
             f"  Dashboard:         {self.dashboard_path}\n"
             f"  Scripts:           {self.scripts_path}\n"
-            f"  Cache:             {self.cache_dir}"
+            f"  Cache:             {self.cache_dir}\n"
+            f"  Hevy:              {hevy_status}\n"
+            f"  HR Zones:          {hr_status}"
         )
 
 

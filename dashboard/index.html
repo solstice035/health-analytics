@@ -540,6 +540,9 @@
             <button class="tab-btn" onclick="switchTab('insights')">
                 <span class="tab-icon">💡</span> Insights
             </button>
+            <button class="tab-btn" onclick="switchTab('workouts')">
+                <span class="tab-icon">🏋️</span> Workouts
+            </button>
         </nav>
 
         <!-- Overview Tab -->
@@ -730,6 +733,45 @@
             <div class="trend-cards" id="comparisonCards"></div>
         </div>
 
+        <!-- Workouts Tab (Hevy Integration) -->
+        <div id="tab-workouts" class="tab-content">
+            <div class="section-header">
+                <h2>🏋️ Strength Training</h2>
+                <span class="section-badge">Hevy Workouts</span>
+            </div>
+            <div class="quick-stats">
+                <div class="quick-stats-row" id="workoutStatsRow"></div>
+            </div>
+            <div class="charts-grid" style="margin-top: 24px;">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📈 Training Volume</h3><p class="chart-subtitle">Daily weight moved (kg)</p></div>
+                    </div>
+                    <div class="chart-container tall"><canvas id="volumeChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">💪 Muscle Groups</h3><p class="chart-subtitle">Volume by muscle group</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="muscleGroupChart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div><h3 class="chart-title">📊 Workout Frequency</h3><p class="chart-subtitle">Training days this month</p></div>
+                    </div>
+                    <div class="chart-container"><canvas id="workoutFrequencyChart"></canvas></div>
+                </div>
+            </div>
+            <div class="section-header" style="margin-top: 32px;">
+                <h2>🏆 Exercise Personal Records</h2>
+            </div>
+            <div class="records-grid" id="exercisePRsGrid"></div>
+            <div class="section-header" style="margin-top: 32px;">
+                <h2>💡 Training Insights</h2>
+            </div>
+            <div class="insights-grid" id="workoutInsightsGrid"></div>
+        </div>
+
         <footer>
             <p>Health Analytics Dashboard • Data synced from Apple Health</p>
             <p>Built with ❤️ for better health tracking • 175 days analyzed</p>
@@ -738,7 +780,7 @@
 
     <script>
         const CONFIG = { dataPath: 'data/', retryDelay: 2000, maxRetries: 3 };
-        const STATE = { charts: {}, data: {}, deepData: {}, isLoading: false, activeTab: 'overview', sections: {} };
+        const STATE = { charts: {}, data: {}, deepData: {}, workoutData: {}, isLoading: false, activeTab: 'overview', sections: {} };
 
         // Section definitions with their required data files
         const SECTIONS = {
@@ -764,7 +806,14 @@
             records: { files: ['all_personal_records'], label: 'Personal Records', container: 'recordsGrid', deep: true },
             streaks: { files: ['deep_analysis'], label: 'Streaks', container: 'streaksCards', deep: true },
             deepInsights: { files: ['deep_insights'], label: 'Deep Insights', container: 'deepInsightsGrid', deep: true },
-            comparison: { files: ['deep_analysis'], label: 'Period Comparison', container: 'comparisonCards', deep: true }
+            comparison: { files: ['deep_analysis'], label: 'Period Comparison', container: 'comparisonCards', deep: true },
+            // Workout sections (Hevy integration)
+            workoutStats: { files: ['workout_summary'], label: 'Workout Stats', container: 'workoutStatsRow', workout: true },
+            volumeChart: { files: ['workout_trends'], label: 'Volume Chart', container: 'volumeChart', workout: true },
+            muscleGroups: { files: ['muscle_groups'], label: 'Muscle Groups', container: 'muscleGroupChart', workout: true },
+            workoutFrequency: { files: ['workout_trends'], label: 'Workout Frequency', container: 'workoutFrequencyChart', workout: true },
+            exercisePRs: { files: ['exercise_prs'], label: 'Exercise PRs', container: 'exercisePRsGrid', workout: true },
+            workoutInsights: { files: ['workout_insights'], label: 'Workout Insights', container: 'workoutInsightsGrid', workout: true }
         };
 
         // Initialize section states
@@ -867,6 +916,7 @@
 
             // Determine which files to reload
             var isDeep = section.deep;
+            var isWorkout = section.workout;
 
             for (var i = 0; i < section.files.length; i++) {
                 var fileKey = section.files[i];
@@ -874,7 +924,9 @@
                 var dataKey = fileKey.replace(/_/g, '');
                 var data = await loadJSON(fileName);
                 if (data) {
-                    if (isDeep) {
+                    if (isWorkout) {
+                        STATE.workoutData[dataKey] = data;
+                    } else if (isDeep) {
                         STATE.deepData[dataKey] = data;
                     } else {
                         STATE.data[dataKey] = data;
@@ -894,7 +946,9 @@
 
             var hasRequiredData = section.files.every(function(f) {
                 var key = f.replace(/_/g, '');
-                return section.deep ? STATE.deepData[key] : STATE.data[key];
+                if (section.workout) return STATE.workoutData[key];
+                if (section.deep) return STATE.deepData[key];
+                return STATE.data[key];
             });
 
             if (!hasRequiredData) {
@@ -930,6 +984,13 @@
                     case 'streaks': renderStreaks(); break;
                     case 'deepInsights': renderDeepInsights(); break;
                     case 'comparison': renderComparison(); break;
+                    // Workout sections
+                    case 'workoutStats': renderWorkoutStats(); break;
+                    case 'volumeChart': renderVolumeChart(); break;
+                    case 'muscleGroups': renderMuscleGroupChart(); break;
+                    case 'workoutFrequency': renderWorkoutFrequencyChart(); break;
+                    case 'exercisePRs': renderExercisePRs(); break;
+                    case 'workoutInsights': renderWorkoutInsights(); break;
                 }
             } catch (err) {
                 console.error('Error rendering section', sectionId, err);
@@ -1007,6 +1068,9 @@
                 case 'insights':
                     sectionsToRender = ['deepInsights', 'comparison'];
                     break;
+                case 'workouts':
+                    sectionsToRender = ['workoutStats', 'volumeChart', 'muscleGroups', 'workoutFrequency', 'exercisePRs', 'workoutInsights'];
+                    break;
             }
             sectionsToRender.forEach(function(sectionId) {
                 renderSection(sectionId);
@@ -1031,9 +1095,11 @@
         async function loadAllData() {
             var files = ['summary_stats.json', 'daily_trends.json', 'weekly_comparison.json', 'goals_progress.json', 'hr_distribution.json', 'metadata.json'];
             var deepFiles = ['deep_analysis.json', 'deep_insights.json', 'monthly_progression.json', 'weekly_patterns.json', 'all_personal_records.json', 'correlations.json'];
+            var workoutFiles = ['workout_trends.json', 'workout_summary.json', 'muscle_groups.json', 'exercise_prs.json', 'workout_insights.json'];
 
             var results = await Promise.allSettled(files.map(f => loadJSON(f)));
             var deepResults = await Promise.allSettled(deepFiles.map(f => loadJSON(f)));
+            var workoutResults = await Promise.allSettled(workoutFiles.map(f => loadJSON(f)));
 
             var data = {};
             results.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) data[files[i].replace('.json', '').replace(/_/g, '')] = r.value; });
@@ -1041,7 +1107,10 @@
             var deepData = {};
             deepResults.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) deepData[deepFiles[i].replace('.json', '').replace(/_/g, '')] = r.value; });
 
-            return { data: Object.keys(data).length ? data : null, deepData };
+            var workoutData = {};
+            workoutResults.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) workoutData[workoutFiles[i].replace('.json', '').replace(/_/g, '')] = r.value; });
+
+            return { data: Object.keys(data).length ? data : null, deepData, workoutData };
         }
 
         function calculateHealthScore(stats) {
@@ -1120,6 +1189,149 @@
             }
             grid.innerHTML = insights.slice(0, 4).map((ins, i) => `<div class="insight-card animate-in delay-${i+1}"><div class="insight-icon ${ins.type}">${ins.icon}</div><div class="insight-content"><h4>${ins.title}</h4><p>${ins.text}</p></div></div>`).join('');
         }
+
+        // ===== WORKOUT RENDER FUNCTIONS (Hevy Integration) =====
+
+        function renderWorkoutStats() {
+            var data = STATE.workoutData.workoutsummary;
+            var row = document.getElementById('workoutStatsRow');
+            if (!data) { row.textContent = 'No workout data'; return; }
+            var fmt = n => n.toLocaleString();
+            row.innerHTML = `
+                <div class="quick-stat animate-in"><div class="quick-stat-icon" style="background: var(--gradient-purple)">🏋️</div><div class="quick-stat-content"><div class="quick-stat-value">${data.workout_count}</div><div class="quick-stat-label">Workouts</div></div></div>
+                <div class="quick-stat animate-in delay-1"><div class="quick-stat-icon" style="background: var(--gradient-blue)">📊</div><div class="quick-stat-content"><div class="quick-stat-value">${fmt(Math.round(data.total_volume_kg))}</div><div class="quick-stat-label">Volume (kg)</div></div></div>
+                <div class="quick-stat animate-in delay-2"><div class="quick-stat-icon" style="background: var(--gradient-green)">⏱️</div><div class="quick-stat-content"><div class="quick-stat-value">${data.avg_workout_duration}</div><div class="quick-stat-label">Avg Duration</div></div></div>
+                <div class="quick-stat animate-in delay-3"><div class="quick-stat-icon" style="background: var(--gradient-orange)">💪</div><div class="quick-stat-content"><div class="quick-stat-value">${data.total_sets}</div><div class="quick-stat-label">Total Sets</div></div></div>
+            `;
+        }
+
+        function renderVolumeChart() {
+            var data = STATE.workoutData.workouttrends;
+            if (!data) return;
+            var ctx = document.getElementById('volumeChart');
+            if (STATE.charts.volumeChart) STATE.charts.volumeChart.destroy();
+            STATE.charts.volumeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.dates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+                    datasets: [{
+                        label: 'Volume (kg)',
+                        data: data.volume_kg,
+                        backgroundColor: data.volume_kg.map(v => v > 0 ? 'rgba(139, 92, 246, 0.7)' : 'rgba(139, 92, 246, 0.1)'),
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderMuscleGroupChart() {
+            var data = STATE.workoutData.musclegroups;
+            if (!data || !data.labels || data.labels.length === 0) {
+                document.getElementById('muscleGroupChart').parentElement.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No muscle group data available</p>';
+                return;
+            }
+            var ctx = document.getElementById('muscleGroupChart');
+            if (STATE.charts.muscleGroupChart) STATE.charts.muscleGroupChart.destroy();
+            var colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+            STATE.charts.muscleGroupChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.percentages,
+                        backgroundColor: colors.slice(0, data.labels.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { padding: 15, usePointStyle: true } }
+                    }
+                }
+            });
+        }
+
+        function renderWorkoutFrequencyChart() {
+            var data = STATE.workoutData.workouttrends;
+            if (!data) return;
+            var ctx = document.getElementById('workoutFrequencyChart');
+            if (STATE.charts.workoutFrequencyChart) STATE.charts.workoutFrequencyChart.destroy();
+            STATE.charts.workoutFrequencyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.dates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+                    datasets: [{
+                        label: 'Workouts',
+                        data: data.workout_count,
+                        backgroundColor: data.workout_count.map(v => v > 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(16, 185, 129, 0.1)'),
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 2, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderExercisePRs() {
+            var data = STATE.workoutData.exerciseprs;
+            var grid = document.getElementById('exercisePRsGrid');
+            if (!data || !data.exercises || data.exercises.length === 0) {
+                grid.textContent = 'No exercise records yet. Sync your Hevy workouts!';
+                return;
+            }
+            grid.innerHTML = data.exercises.slice(0, 12).map((ex, i) => `
+                <div class="record-card animate-in delay-${Math.min(i, 3)}">
+                    <div class="record-icon">🏆</div>
+                    <div class="record-content">
+                        <div class="record-label">${ex.name}</div>
+                        <div class="record-value">${ex.max_weight_kg} kg</div>
+                        <div class="record-date">${ex.max_weight_date || 'All time'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderWorkoutInsights() {
+            var data = STATE.workoutData.workoutinsights;
+            var grid = document.getElementById('workoutInsightsGrid');
+            if (!data || !data.insights || data.insights.length === 0) {
+                grid.textContent = 'Sync your Hevy workouts to see training insights.';
+                return;
+            }
+            grid.innerHTML = data.insights.map((ins, i) => `
+                <div class="insight-card animate-in delay-${i+1}">
+                    <div class="insight-icon ${ins.type}">${ins.icon}</div>
+                    <div class="insight-content">
+                        <h4>${ins.title}</h4>
+                        <p>${ins.text}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== END WORKOUT RENDER FUNCTIONS =====
 
         function renderDailyTrends(data, days) {
             days = days || 30;
@@ -1610,6 +1822,9 @@
                 }
                 if (result.deepData) {
                     STATE.deepData = result.deepData;
+                }
+                if (result.workoutData) {
+                    STATE.workoutData = result.workoutData;
                 }
 
                 // If we got absolutely nothing, show global error

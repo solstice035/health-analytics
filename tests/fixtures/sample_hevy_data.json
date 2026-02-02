@@ -1,0 +1,112 @@
+{
+  "workouts": [
+    {
+      "id": "workout_001",
+      "name": "Push Day",
+      "start_time": "2026-01-25T10:00:00Z",
+      "end_time": "2026-01-25T11:15:00Z",
+      "exercises": [
+        {
+          "name": "Bench Press",
+          "muscle_group": "chest",
+          "sets": [
+            {"reps": 10, "weight_kg": 60, "type": "warmup"},
+            {"reps": 8, "weight_kg": 80, "type": "working"},
+            {"reps": 8, "weight_kg": 80, "type": "working"},
+            {"reps": 6, "weight_kg": 85, "type": "working"}
+          ]
+        },
+        {
+          "name": "Overhead Press",
+          "muscle_group": "shoulders",
+          "sets": [
+            {"reps": 10, "weight_kg": 40, "type": "working"},
+            {"reps": 8, "weight_kg": 45, "type": "working"},
+            {"reps": 8, "weight_kg": 45, "type": "working"}
+          ]
+        },
+        {
+          "name": "Tricep Pushdown",
+          "muscle_group": "triceps",
+          "sets": [
+            {"reps": 12, "weight_kg": 25, "type": "working"},
+            {"reps": 12, "weight_kg": 25, "type": "working"},
+            {"reps": 10, "weight_kg": 27.5, "type": "working"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workout_002",
+      "name": "Pull Day",
+      "start_time": "2026-01-27T09:30:00Z",
+      "end_time": "2026-01-27T10:45:00Z",
+      "exercises": [
+        {
+          "name": "Deadlift",
+          "muscle_group": "back",
+          "sets": [
+            {"reps": 5, "weight_kg": 100, "type": "warmup"},
+            {"reps": 5, "weight_kg": 140, "type": "working"},
+            {"reps": 5, "weight_kg": 140, "type": "working"},
+            {"reps": 3, "weight_kg": 160, "type": "working"}
+          ]
+        },
+        {
+          "name": "Pull-ups",
+          "muscle_group": "back",
+          "sets": [
+            {"reps": 10, "weight_kg": 0, "type": "working"},
+            {"reps": 8, "weight_kg": 0, "type": "working"},
+            {"reps": 6, "weight_kg": 0, "type": "working"}
+          ]
+        },
+        {
+          "name": "Barbell Rows",
+          "muscle_group": "back",
+          "sets": [
+            {"reps": 10, "weight_kg": 70, "type": "working"},
+            {"reps": 8, "weight_kg": 75, "type": "working"},
+            {"reps": 8, "weight_kg": 75, "type": "working"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workout_003",
+      "name": "Leg Day",
+      "start_time": "2026-01-29T11:00:00Z",
+      "end_time": "2026-01-29T12:30:00Z",
+      "exercises": [
+        {
+          "name": "Squat",
+          "muscle_group": "legs",
+          "sets": [
+            {"reps": 8, "weight_kg": 60, "type": "warmup"},
+            {"reps": 5, "weight_kg": 100, "type": "working"},
+            {"reps": 5, "weight_kg": 100, "type": "working"},
+            {"reps": 5, "weight_kg": 100, "type": "working"}
+          ]
+        },
+        {
+          "name": "Romanian Deadlift",
+          "muscle_group": "legs",
+          "sets": [
+            {"reps": 10, "weight_kg": 80, "type": "working"},
+            {"reps": 10, "weight_kg": 80, "type": "working"},
+            {"reps": 10, "weight_kg": 80, "type": "working"}
+          ]
+        },
+        {
+          "name": "Leg Press",
+          "muscle_group": "legs",
+          "sets": [
+            {"reps": 12, "weight_kg": 150, "type": "working"},
+            {"reps": 12, "weight_kg": 150, "type": "working"},
+            {"reps": 10, "weight_kg": 160, "type": "working"}
+          ]
+        }
+      ]
+    }
+  ]
+}
